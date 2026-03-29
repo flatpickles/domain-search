@@ -29,7 +29,12 @@
       "description_url": null,
       "preferred_registration_provider": "Cloudflare",
       "registration_provider": "Namecheap",
+      "registration_kind": "registrar_search",
       "registration_url": "https://www.namecheap.com/domains/registration/results/?domain=sunrise.com",
+      "registration_source": "Namecheap domain search",
+      "registration_source_url": "https://www.namecheap.com/domains/registration/results/",
+      "registration_verified_at": "2026-03-29",
+      "registration_note": null,
       "price": 18.48,
       "price_updated_at": "2026-03-29",
       "price_source": {

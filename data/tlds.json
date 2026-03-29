@@ -6,7 +6,17 @@
     "price_source_name": "Namecheap full TLD list",
     "price_source_url": "https://www.namecheap.com/domains/full-tld-list/",
     "preferred_registration_provider": "Cloudflare",
-    "fallback_registration_provider": "Namecheap"
+    "fallback_registration_provider": "Namecheap",
+    "registration_options": [
+      {
+        "provider": "Namecheap",
+        "kind": "registrar_search",
+        "url_template": "https://www.namecheap.com/domains/registration/results/?domain={domain}",
+        "source_name": "Namecheap domain search",
+        "source_url": "https://www.namecheap.com/domains/registration/results/",
+        "verified_at": "2026-03-29"
+      }
+    ]
   },
   {
     "tld": "at",
@@ -15,7 +25,17 @@
     "price_source_name": "Namecheap full TLD list",
     "price_source_url": "https://www.namecheap.com/domains/full-tld-list/",
     "preferred_registration_provider": "Cloudflare",
-    "fallback_registration_provider": "Namecheap"
+    "fallback_registration_provider": "Namecheap",
+    "registration_options": [
+      {
+        "provider": "Namecheap",
+        "kind": "registrar_search",
+        "url_template": "https://www.namecheap.com/domains/registration/results/?domain={domain}",
+        "source_name": "Namecheap domain search",
+        "source_url": "https://www.namecheap.com/domains/registration/results/",
+        "verified_at": "2026-03-29"
+      }
+    ]
   },
   {
     "tld": "be",
@@ -24,7 +44,17 @@
     "price_source_name": "Namecheap full TLD list",
     "price_source_url": "https://www.namecheap.com/domains/full-tld-list/",
     "preferred_registration_provider": "Cloudflare",
-    "fallback_registration_provider": "Namecheap"
+    "fallback_registration_provider": "Namecheap",
+    "registration_options": [
+      {
+        "provider": "Namecheap",
+        "kind": "registrar_search",
+        "url_template": "https://www.namecheap.com/domains/registration/results/?domain={domain}",
+        "source_name": "Namecheap domain search",
+        "source_url": "https://www.namecheap.com/domains/registration/results/",
+        "verified_at": "2026-03-29"
+      }
+    ]
   },
   {
     "tld": "ca",
@@ -33,7 +63,17 @@
     "price_source_name": "Namecheap full TLD list",
     "price_source_url": "https://www.namecheap.com/domains/full-tld-list/",
     "preferred_registration_provider": "Cloudflare",
-    "fallback_registration_provider": "Namecheap"
+    "fallback_registration_provider": "Namecheap",
+    "registration_options": [
+      {
+        "provider": "Namecheap",
+        "kind": "registrar_search",
+        "url_template": "https://www.namecheap.com/domains/registration/results/?domain={domain}",
+        "source_name": "Namecheap domain search",
+        "source_url": "https://www.namecheap.com/domains/registration/results/",
+        "verified_at": "2026-03-29"
+      }
+    ]
   },
   {
     "tld": "co",
@@ -42,7 +82,17 @@
     "price_source_name": "Namecheap full TLD list",
     "price_source_url": "https://www.namecheap.com/domains/full-tld-list/",
     "preferred_registration_provider": "Cloudflare",
-    "fallback_registration_provider": "Namecheap"
+    "fallback_registration_provider": "Namecheap",
+    "registration_options": [
+      {
+        "provider": "Namecheap",
+        "kind": "registrar_search",
+        "url_template": "https://www.namecheap.com/domains/registration/results/?domain={domain}",
+        "source_name": "Namecheap domain search",
+        "source_url": "https://www.namecheap.com/domains/registration/results/",
+        "verified_at": "2026-03-29"
+      }
+    ]
   },
   {
     "tld": "com",
@@ -51,7 +101,17 @@
     "price_source_name": "Namecheap full TLD list",
     "price_source_url": "https://www.namecheap.com/domains/full-tld-list/",
     "preferred_registration_provider": "Cloudflare",
-    "fallback_registration_provider": "Namecheap"
+    "fallback_registration_provider": "Namecheap",
+    "registration_options": [
+      {
+        "provider": "Namecheap",
+        "kind": "registrar_search",
+        "url_template": "https://www.namecheap.com/domains/registration/results/?domain={domain}",
+        "source_name": "Namecheap domain search",
+        "source_url": "https://www.namecheap.com/domains/registration/results/",
+        "verified_at": "2026-03-29"
+      }
+    ]
   },
   {
     "tld": "de",
@@ -60,7 +120,17 @@
     "price_source_name": "Namecheap full TLD list",
     "price_source_url": "https://www.namecheap.com/domains/full-tld-list/",
     "preferred_registration_provider": "Cloudflare",
-    "fallback_registration_provider": "Namecheap"
+    "fallback_registration_provider": "Namecheap",
+    "registration_options": [
+      {
+        "provider": "Namecheap",
+        "kind": "registrar_search",
+        "url_template": "https://www.namecheap.com/domains/registration/results/?domain={domain}",
+        "source_name": "Namecheap domain search",
+        "source_url": "https://www.namecheap.com/domains/registration/results/",
+        "verified_at": "2026-03-29"
+      }
+    ]
   },
   {
     "tld": "dev",
@@ -69,7 +139,17 @@
     "price_source_name": "Namecheap full TLD list",
     "price_source_url": "https://www.namecheap.com/domains/full-tld-list/",
     "preferred_registration_provider": "Cloudflare",
-    "fallback_registration_provider": "Namecheap"
+    "fallback_registration_provider": "Namecheap",
+    "registration_options": [
+      {
+        "provider": "Namecheap",
+        "kind": "registrar_search",
+        "url_template": "https://www.namecheap.com/domains/registration/results/?domain={domain}",
+        "source_name": "Namecheap domain search",
+        "source_url": "https://www.namecheap.com/domains/registration/results/",
+        "verified_at": "2026-03-29"
+      }
+    ]
   },
   {
     "tld": "es",
@@ -78,7 +158,17 @@
     "price_source_name": "Namecheap full TLD list",
     "price_source_url": "https://www.namecheap.com/domains/full-tld-list/",
     "preferred_registration_provider": "Namecheap",
-    "fallback_registration_provider": "Namecheap"
+    "fallback_registration_provider": "Namecheap",
+    "registration_options": [
+      {
+        "provider": "Namecheap",
+        "kind": "registrar_search",
+        "url_template": "https://www.namecheap.com/domains/registration/results/?domain={domain}",
+        "source_name": "Namecheap domain search",
+        "source_url": "https://www.namecheap.com/domains/registration/results/",
+        "verified_at": "2026-03-29"
+      }
+    ]
   },
   {
     "tld": "eu",
@@ -87,7 +177,17 @@
     "price_source_name": "Namecheap full TLD list",
     "price_source_url": "https://www.namecheap.com/domains/full-tld-list/",
     "preferred_registration_provider": "Cloudflare",
-    "fallback_registration_provider": "Namecheap"
+    "fallback_registration_provider": "Namecheap",
+    "registration_options": [
+      {
+        "provider": "Namecheap",
+        "kind": "registrar_search",
+        "url_template": "https://www.namecheap.com/domains/registration/results/?domain={domain}",
+        "source_name": "Namecheap domain search",
+        "source_url": "https://www.namecheap.com/domains/registration/results/",
+        "verified_at": "2026-03-29"
+      }
+    ]
   },
   {
     "tld": "in",
@@ -96,7 +196,17 @@
     "price_source_name": "Namecheap full TLD list",
     "price_source_url": "https://www.namecheap.com/domains/full-tld-list/",
     "preferred_registration_provider": "Cloudflare",
-    "fallback_registration_provider": "Namecheap"
+    "fallback_registration_provider": "Namecheap",
+    "registration_options": [
+      {
+        "provider": "Namecheap",
+        "kind": "registrar_search",
+        "url_template": "https://www.namecheap.com/domains/registration/results/?domain={domain}",
+        "source_name": "Namecheap domain search",
+        "source_url": "https://www.namecheap.com/domains/registration/results/",
+        "verified_at": "2026-03-29"
+      }
+    ]
   },
   {
     "tld": "io",
@@ -105,7 +215,17 @@
     "price_source_name": "Namecheap full TLD list",
     "price_source_url": "https://www.namecheap.com/domains/full-tld-list/",
     "preferred_registration_provider": "Cloudflare",
-    "fallback_registration_provider": "Namecheap"
+    "fallback_registration_provider": "Namecheap",
+    "registration_options": [
+      {
+        "provider": "Namecheap",
+        "kind": "registrar_search",
+        "url_template": "https://www.namecheap.com/domains/registration/results/?domain={domain}",
+        "source_name": "Namecheap domain search",
+        "source_url": "https://www.namecheap.com/domains/registration/results/",
+        "verified_at": "2026-03-29"
+      }
+    ]
   },
   {
     "tld": "is",
@@ -114,7 +234,17 @@
     "price_source_name": "Namecheap full TLD list",
     "price_source_url": "https://www.namecheap.com/domains/full-tld-list/",
     "preferred_registration_provider": "Namecheap",
-    "fallback_registration_provider": "Namecheap"
+    "fallback_registration_provider": "Namecheap",
+    "registration_options": [
+      {
+        "provider": "ISNIC",
+        "kind": "registry_homepage",
+        "url": "https://www.isnic.is/en",
+        "source_name": "ISNIC",
+        "source_url": "https://www.isnic.is/en",
+        "verified_at": "2026-03-29"
+      }
+    ]
   },
   {
     "tld": "it",
@@ -123,7 +253,17 @@
     "price_source_name": "Namecheap full TLD list",
     "price_source_url": "https://www.namecheap.com/domains/full-tld-list/",
     "preferred_registration_provider": "Namecheap",
-    "fallback_registration_provider": "Namecheap"
+    "fallback_registration_provider": "Namecheap",
+    "registration_options": [
+      {
+        "provider": "Registro .it",
+        "kind": "registry_homepage",
+        "url": "https://www.nic.it/en",
+        "source_name": "Registro .it",
+        "source_url": "https://www.nic.it/en",
+        "verified_at": "2026-03-29"
+      }
+    ]
   },
   {
     "tld": "me",
@@ -132,7 +272,17 @@
     "price_source_name": "Namecheap full TLD list",
     "price_source_url": "https://www.namecheap.com/domains/full-tld-list/",
     "preferred_registration_provider": "Cloudflare",
-    "fallback_registration_provider": "Namecheap"
+    "fallback_registration_provider": "Namecheap",
+    "registration_options": [
+      {
+        "provider": "Namecheap",
+        "kind": "registrar_search",
+        "url_template": "https://www.namecheap.com/domains/registration/results/?domain={domain}",
+        "source_name": "Namecheap domain search",
+        "source_url": "https://www.namecheap.com/domains/registration/results/",
+        "verified_at": "2026-03-29"
+      }
+    ]
   },
   {
     "tld": "net",
@@ -141,7 +291,17 @@
     "price_source_name": "Namecheap full TLD list",
     "price_source_url": "https://www.namecheap.com/domains/full-tld-list/",
     "preferred_registration_provider": "Cloudflare",
-    "fallback_registration_provider": "Namecheap"
+    "fallback_registration_provider": "Namecheap",
+    "registration_options": [
+      {
+        "provider": "Namecheap",
+        "kind": "registrar_search",
+        "url_template": "https://www.namecheap.com/domains/registration/results/?domain={domain}",
+        "source_name": "Namecheap domain search",
+        "source_url": "https://www.namecheap.com/domains/registration/results/",
+        "verified_at": "2026-03-29"
+      }
+    ]
   },
   {
     "tld": "nl",
@@ -150,7 +310,17 @@
     "price_source_name": "Namecheap full TLD list",
     "price_source_url": "https://www.namecheap.com/domains/full-tld-list/",
     "preferred_registration_provider": "Cloudflare",
-    "fallback_registration_provider": "Namecheap"
+    "fallback_registration_provider": "Namecheap",
+    "registration_options": [
+      {
+        "provider": "Namecheap",
+        "kind": "registrar_search",
+        "url_template": "https://www.namecheap.com/domains/registration/results/?domain={domain}",
+        "source_name": "Namecheap domain search",
+        "source_url": "https://www.namecheap.com/domains/registration/results/",
+        "verified_at": "2026-03-29"
+      }
+    ]
   },
   {
     "tld": "org",
@@ -159,7 +329,17 @@
     "price_source_name": "Namecheap full TLD list",
     "price_source_url": "https://www.namecheap.com/domains/full-tld-list/",
     "preferred_registration_provider": "Cloudflare",
-    "fallback_registration_provider": "Namecheap"
+    "fallback_registration_provider": "Namecheap",
+    "registration_options": [
+      {
+        "provider": "Namecheap",
+        "kind": "registrar_search",
+        "url_template": "https://www.namecheap.com/domains/registration/results/?domain={domain}",
+        "source_name": "Namecheap domain search",
+        "source_url": "https://www.namecheap.com/domains/registration/results/",
+        "verified_at": "2026-03-29"
+      }
+    ]
   },
   {
     "tld": "pt",
@@ -168,7 +348,17 @@
     "price_source_name": "Namecheap full TLD list",
     "price_source_url": "https://www.namecheap.com/domains/full-tld-list/",
     "preferred_registration_provider": "Namecheap",
-    "fallback_registration_provider": "Namecheap"
+    "fallback_registration_provider": "Namecheap",
+    "registration_options": [
+      {
+        "provider": "DNS.PT",
+        "kind": "registry_homepage",
+        "url": "https://www.dns.pt/en/",
+        "source_name": "DNS.PT",
+        "source_url": "https://www.dns.pt/en/",
+        "verified_at": "2026-03-29"
+      }
+    ]
   },
   {
     "tld": "re",
@@ -177,7 +367,17 @@
     "price_source_name": "Namecheap full TLD list",
     "price_source_url": "https://www.namecheap.com/domains/full-tld-list/",
     "preferred_registration_provider": "Namecheap",
-    "fallback_registration_provider": "Namecheap"
+    "fallback_registration_provider": "Namecheap",
+    "registration_options": [
+      {
+        "provider": "AFNIC .RE",
+        "kind": "registry_homepage",
+        "url": "https://www.afnic.fr/en/products-and-services/french-overseas-cctlds/re-the-internet-of-reunion/",
+        "source_name": "AFNIC .RE",
+        "source_url": "https://www.afnic.fr/en/products-and-services/french-overseas-cctlds/re-the-internet-of-reunion/",
+        "verified_at": "2026-03-29"
+      }
+    ]
   },
   {
     "tld": "se",
@@ -186,7 +386,17 @@
     "price_source_name": "Namecheap full TLD list",
     "price_source_url": "https://www.namecheap.com/domains/full-tld-list/",
     "preferred_registration_provider": "Namecheap",
-    "fallback_registration_provider": "Namecheap"
+    "fallback_registration_provider": "Namecheap",
+    "registration_options": [
+      {
+        "provider": "Internetstiftelsen",
+        "kind": "registry_homepage",
+        "url": "https://internetstiftelsen.se/en/domain-names/",
+        "source_name": "Internetstiftelsen domain names",
+        "source_url": "https://internetstiftelsen.se/en/domain-names/",
+        "verified_at": "2026-03-29"
+      }
+    ]
   },
   {
     "tld": "sh",
@@ -195,7 +405,17 @@
     "price_source_name": "Namecheap full TLD list",
     "price_source_url": "https://www.namecheap.com/domains/full-tld-list/",
     "preferred_registration_provider": "Namecheap",
-    "fallback_registration_provider": "Namecheap"
+    "fallback_registration_provider": "Namecheap",
+    "registration_options": [
+      {
+        "provider": "SH Registry",
+        "kind": "registry_homepage",
+        "url": "https://www.nic.sh/",
+        "source_name": "NIC.SH",
+        "source_url": "https://www.nic.sh/",
+        "verified_at": "2026-03-29"
+      }
+    ]
   },
   {
     "tld": "st",
@@ -204,7 +424,17 @@
     "price_source_name": "Namecheap full TLD list",
     "price_source_url": "https://www.namecheap.com/domains/full-tld-list/",
     "preferred_registration_provider": "Namecheap",
-    "fallback_registration_provider": "Namecheap"
+    "fallback_registration_provider": "Namecheap",
+    "registration_options": [
+      {
+        "provider": "ST Registry",
+        "kind": "registry_homepage",
+        "url": "https://en.nic.st/",
+        "source_name": "ST Registry",
+        "source_url": "https://en.nic.st/",
+        "verified_at": "2026-03-29"
+      }
+    ]
   },
   {
     "tld": "us",
@@ -213,7 +443,17 @@
     "price_source_name": "Namecheap full TLD list",
     "price_source_url": "https://www.namecheap.com/domains/full-tld-list/",
     "preferred_registration_provider": "Cloudflare",
-    "fallback_registration_provider": "Namecheap"
+    "fallback_registration_provider": "Namecheap",
+    "registration_options": [
+      {
+        "provider": "Namecheap",
+        "kind": "registrar_search",
+        "url_template": "https://www.namecheap.com/domains/registration/results/?domain={domain}",
+        "source_name": "Namecheap domain search",
+        "source_url": "https://www.namecheap.com/domains/registration/results/",
+        "verified_at": "2026-03-29"
+      }
+    ]
   },
   {
     "tld": "xyz",
@@ -222,6 +462,16 @@
     "price_source_name": "Namecheap full TLD list",
     "price_source_url": "https://www.namecheap.com/domains/full-tld-list/",
     "preferred_registration_provider": "Cloudflare",
-    "fallback_registration_provider": "Namecheap"
+    "fallback_registration_provider": "Namecheap",
+    "registration_options": [
+      {
+        "provider": "Namecheap",
+        "kind": "registrar_search",
+        "url_template": "https://www.namecheap.com/domains/registration/results/?domain={domain}",
+        "source_name": "Namecheap domain search",
+        "source_url": "https://www.namecheap.com/domains/registration/results/",
+        "verified_at": "2026-03-29"
+      }
+    ]
   }
 ]

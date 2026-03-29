@@ -124,9 +124,16 @@ Result objects include:
 
 - bundled annual price metadata when the TLD is known
 - a preferred registrar when configured
-- an actionable registration URL
+- an actionable registration target when one is curated
+- registration source metadata that is separate from pricing source metadata
 
-Cloudflare is treated as the preferred registrar where configured, but because Cloudflare does not provide a universally useful public search URL, actionable registration links may fall back to Namecheap.
+Registration links are TLD-aware. They may point to either:
+
+- a verified registrar search page
+- an official registry registration page
+- an official registry homepage
+
+If no reliable bundled registration target is known, the registration link is left blank instead of guessed. Cloudflare can remain an advisory preferred registrar, but it is not used as the actionable link unless a usable public registration URL is bundled.
 
 ## Library
 
@@ -205,12 +212,12 @@ Example output shape:
 
 ```json
 {
-  "domain": "walk.in",
-  "status": "UNKNOWN",
-  "verification_status": "unknown_needs_registrar_check",
-  "verification_hint": "WHOIS inconclusive; verify on registrar before recommending purchase.",
-  "registration_provider": "Namecheap",
-  "registration_url": "https://www.namecheap.com/domains/registration/results/?domain=walk.in"
+  "domain": "chemi.st",
+  "status": "AVAILABLE",
+  "registration_provider": "ST Registry",
+  "registration_kind": "registry_homepage",
+  "registration_url": "https://en.nic.st/",
+  "registration_note": "No verified registrar search link is bundled for this TLD; using the official registry homepage."
 }
 ```
 

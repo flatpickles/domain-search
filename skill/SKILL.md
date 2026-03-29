@@ -105,5 +105,8 @@ Unknown-result fallback:
 - `check` is the preferred path for coined or agent-crafted shortlists.
 - Use `--with-descriptions` only on final result sets.
 - Bundled price data is dated and advisory; the tool should say it may now be out of date.
+- Registration links are curated per TLD and may point to either a registrar search page or the official registry.
+- Pricing source and registration source are separate; do not assume price metadata implies registrar support.
+- If no reliable bundled registration target is known, report that the registration link is unavailable rather than guessing.
 - When supplying coined names, include your own short `description` if you have one.
 - Do not pull in [$playwright](/Users/matt/.codex/skills/playwright/SKILL.md) for ideation-only requests, large exploratory batches, or when the user did not ask for purchase-level confirmation.

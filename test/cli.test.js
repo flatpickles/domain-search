@@ -61,6 +61,7 @@ test("check supports JSON handoff from generate output", () => {
   assert.equal(parsed.available, 2);
   assert.equal(parsed.results.length, 2);
   assert.ok(parsed.results.every((item) => item.registration_provider));
+  assert.ok(parsed.results.every((item) => item.registration_kind));
 });
 
 test("search runs generate plus check with exact mode", () => {
@@ -134,6 +135,20 @@ test("prices filters bundled metadata by max price", () => {
 
   assert.ok(parsed.items.some((item) => item.tld === "com"));
   assert.ok(parsed.items.every((item) => item.annual_price_usd === null || item.annual_price_usd <= 20));
+});
+
+test("check uses curated .st registration metadata instead of Namecheap fallback", () => {
+  const output = runCli([
+    "check",
+    "chemi.st",
+    "--progress-format",
+    "silent",
+  ]);
+  const parsed = JSON.parse(output);
+
+  assert.equal(parsed.results[0].registration_provider, "ST Registry");
+  assert.equal(parsed.results[0].registration_kind, "registry_homepage");
+  assert.match(parsed.results[0].registration_url, /nic\.st/);
 });
 
 test("skill launcher works from the skill directory", () => {

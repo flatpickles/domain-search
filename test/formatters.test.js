@@ -40,6 +40,7 @@ test("formatResults emits markdown for checked results with registrar metadata",
         description_url: "https://en.wiktionary.org/wiki/chemist",
         candidate_type: "real_word",
         registration_provider: "Namecheap",
+        registration_kind: "registrar_search",
         registration_url: "https://example.test",
         price: 18.48,
       },
@@ -112,6 +113,7 @@ test("formatResults separates unknown results needing registrar verification", (
         verification_status: "unknown_needs_registrar_check",
         verification_hint: "WHOIS inconclusive; verify on registrar before recommending purchase.",
         registration_provider: "Namecheap",
+        registration_kind: "registrar_search",
         registration_url: "https://example.test",
       },
     ],
@@ -121,6 +123,33 @@ test("formatResults separates unknown results needing registrar verification", (
   assert.match(output, /## Unknown Results Needing Registrar Verification/);
   assert.match(output, /WHOIS inconclusive; verify on registrar before recommending purchase/);
   assert.match(output, /Register via \[Namecheap\]/);
+});
+
+test("formatResults distinguishes registry fallback links", () => {
+  const output = formatResults({
+    kind: "check",
+    mode: "hack",
+    tlds: ["st"],
+    checked: 1,
+    candidatePool: 1,
+    available: 1,
+    unknown: 0,
+    results: [
+      {
+        word: "chemist",
+        domain: "chemi.st",
+        description: "A scientist or expert in chemistry.",
+        candidate_type: "real_word",
+        registration_provider: "ST Registry",
+        registration_kind: "registry_homepage",
+        registration_url: "https://en.nic.st/",
+        registration_note: "No verified registrar search link is bundled for this TLD; using the official registry homepage.",
+      },
+    ],
+  });
+
+  assert.match(output, /Official registry: \[ST Registry\]/);
+  assert.match(output, /official registry homepage/);
 });
 
 test("formatResults emits json when requested", () => {

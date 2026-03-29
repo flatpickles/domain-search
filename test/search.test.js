@@ -34,6 +34,9 @@ test("checkCandidates preserves metadata and can include unknown results", async
   assert.equal(summary.results[0].candidate_type, "brandable");
   assert.equal(summary.results[0].source_type, "provided");
   assert.equal(summary.results[0].verification_status, "available");
+  assert.equal(summary.results[0].registration_provider, "ST Registry");
+  assert.equal(summary.results[0].registration_kind, "registry_homepage");
+  assert.match(summary.results[0].registration_note, /official registry homepage/);
   assert.equal(summary.results[1].status, "UNKNOWN");
   assert.equal(summary.results[1].verification_status, "unknown_needs_registrar_check");
   assert.match(summary.results[1].verification_hint, /WHOIS inconclusive/);
@@ -69,6 +72,30 @@ test("checkCandidates preserves provided brandable descriptions", async () => {
   assert.equal(summary.results[0].verification_status, "available");
 });
 
+test("checkCandidates leaves registration link fields null for unknown TLDs", async () => {
+  const summary = await checkCandidates({
+    candidates: [
+      {
+        mode: "exact",
+        input: "example",
+        domain: "example.madeup",
+        label: "example",
+        candidate_type: "brandable",
+        source_type: "provided",
+      },
+    ],
+    progressFormat: "silent",
+    checkDomainFn: async () => ({
+      status: "AVAILABLE",
+    }),
+  });
+
+  assert.equal(summary.results[0].registration_provider, null);
+  assert.equal(summary.results[0].registration_url, null);
+  assert.equal(summary.results[0].registration_kind, null);
+  assert.match(summary.results[0].registration_note, /No reliable bundled registration target/);
+});
+
 test("searchDomains combines generate and check phases", async () => {
   const summary = await searchDomains({
     mode: "exact",
@@ -91,6 +118,7 @@ test("getTldPricing can return explicit unknown TLD placeholders", () => {
   const pricing = getTldPricing({ tlds: ["madeup"] });
   assert.equal(pricing.items[0].tld, "madeup");
   assert.equal(pricing.items[0].annual_price_usd, null);
+  assert.deepEqual(pricing.items[0].registration_options, []);
 });
 
 test("getTldPricing exposes broader hack-friendly price coverage under a max price", () => {
@@ -100,4 +128,13 @@ test("getTldPricing exposes broader hack-friendly price coverage under a max pri
   assert.ok(tlds.has("sh"));
   assert.ok(tlds.has("in"));
   assert.ok(tlds.has("me"));
+});
+
+test(".st uses a curated non-Namecheap registration target", () => {
+  const pricing = getTldPricing({ tlds: ["st"] });
+  const option = pricing.items[0].registration_options[0];
+
+  assert.equal(option.provider, "ST Registry");
+  assert.equal(option.kind, "registry_homepage");
+  assert.match(option.url, /nic\.st/);
 });
