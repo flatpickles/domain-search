@@ -1,0 +1,33 @@
+{
+  "name": "domain-search",
+  "version": "0.1.0",
+  "description": "Dictionary-driven domain search for hacks and exact TLDs, with a bundled Codex skill.",
+  "type": "commonjs",
+  "main": "index.js",
+  "bin": {
+    "domain-search": "bin/domain-search.js"
+  },
+  "exports": {
+    ".": "./index.js"
+  },
+  "files": [
+    "bin",
+    "lib",
+    "skill",
+    "data",
+    "examples",
+    "index.js",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "node --test"
+  },
+  "keywords": [
+    "domains",
+    "domain-hacks",
+    "whois",
+    "codex-skill"
+  ],
+  "license": "MIT"
+}

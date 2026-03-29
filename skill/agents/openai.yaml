@@ -1,0 +1,7 @@
+interface:
+  display_name: "Domain Search"
+  short_description: "Search hacks and exact TLD domains"
+  default_prompt: "Use $domain-search to find dictionary-driven domain hacks or exact-TLD domain candidates."
+
+policy:
+  allow_implicit_invocation: true

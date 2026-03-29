@@ -1,0 +1,34 @@
+{
+  "mode": "exact",
+  "tlds": [
+    "com",
+    "net"
+  ],
+  "checked": 3,
+  "candidatePool": 8,
+  "available": 2,
+  "results": [
+    {
+      "mode": "exact",
+      "word": "sunrise",
+      "domain": "sunrise.com",
+      "label": "sunrise",
+      "tld": "com",
+      "score": 54,
+      "definition": "The time of day when the sun appears above the horizon.",
+      "definitionSource": "https://en.wiktionary.org/wiki/sunrise",
+      "status": "AVAILABLE"
+    },
+    {
+      "mode": "exact",
+      "word": "sunrise",
+      "domain": "sunrise.net",
+      "label": "sunrise",
+      "tld": "net",
+      "score": 54,
+      "definition": null,
+      "definitionSource": "https://en.wiktionary.org/wiki/sunrise",
+      "status": "AVAILABLE"
+    }
+  ]
+}
