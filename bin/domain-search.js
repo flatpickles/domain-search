@@ -12,6 +12,7 @@ const {
   getTldPricing,
   searchDomains,
 } = require("..");
+const { normalizeCandidate } = require("../lib/search");
 const { normalizeWords } = require("../lib/words");
 const { normalizeDomain } = require("../lib/whois");
 
@@ -22,12 +23,12 @@ function usage() {
     "",
     "Commands:",
     "  generate  Generate ranked candidates only",
-    "  check     Check a shortlist, JSON input, or direct domains/words",
+    "  check     Check a shortlist, JSON input, or direct domains/names",
     "  search    Convenience wrapper for generate + check",
     "  prices    Show bundled TLD pricing and registrar metadata",
     "",
     "Shared options:",
-    "  --mode <hack|exact>           Candidate mode for generate/search and bare-word checks",
+    "  --mode <hack|exact>           Domain-shape mode for generate/search and bare-name checks",
     "  --tlds <list>                Comma-separated TLDs",
     "  --limit <n>                  Result limit",
     "  --max-checks <n>             Maximum WHOIS checks",
@@ -42,7 +43,7 @@ function usage() {
     "",
     "Check/search options:",
     "  --concurrency <n>            Concurrent WHOIS checks",
-    "  --with-definitions           Fetch one short definition for available results",
+    "  --with-descriptions          Fetch one short description for real-word results",
     "  --show-unknown               Include UNKNOWN WHOIS results",
     "  --progress-format <human|jsonl|silent>",
     "",
@@ -66,6 +67,7 @@ function parseArgs(argv) {
     "help",
     "show-unknown",
     "with-definitions",
+    "with-descriptions",
   ]);
 
   for (let i = 0; i < argv.length; i += 1) {
@@ -115,13 +117,24 @@ function readTextInput(inputPath) {
 
 function parseCandidateInput(inputPath) {
   const raw = readTextInput(inputPath);
-  const parsed = JSON.parse(raw);
+  try {
+    const parsed = JSON.parse(raw);
 
-  if (Array.isArray(parsed)) return parsed;
-  if (Array.isArray(parsed.candidates)) return parsed.candidates;
-  if (Array.isArray(parsed.results)) return parsed.results;
+    if (Array.isArray(parsed)) return parsed;
+    if (Array.isArray(parsed.candidates)) return parsed.candidates;
+    if (Array.isArray(parsed.results)) return parsed.results;
 
-  throw new Error("Expected a JSON array or an object with `candidates` or `results`.");
+    throw new Error("Expected a JSON array or an object with `candidates` or `results`.");
+  } catch (error) {
+    if (!(error instanceof SyntaxError)) {
+      throw error;
+    }
+
+    return raw
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter(Boolean);
+  }
 }
 
 function toGenerateOptions(flags, options = {}) {
@@ -148,46 +161,83 @@ function toCheckOptions(flags) {
     maxChecks: flags["max-checks"],
     showUnknown: Boolean(flags["show-unknown"]),
     withDefinitions: Boolean(flags["with-definitions"]),
+    withDescriptions: Boolean(flags["with-descriptions"] || flags["with-definitions"]),
     progressFormat: flags["progress-format"] || "human",
   };
 }
 
 function createCandidatesFromArgs(args, flags) {
-  const domains = args.filter((value) => value.includes("."));
-  const words = normalizeWords(args.filter((value) => !value.includes(".")), {
-    minWordLength: flags["min-word-length"] ?? 1,
-    maxWordLength: flags["max-word-length"] ?? 64,
-  });
-  const candidates = domains.map((domain) => ({
+  const explicitDomains = args.filter((value) => value.includes("."));
+  const bareInputs = args.filter((value) => !explicitDomains.includes(value));
+  const candidates = explicitDomains.map((domain) => ({
     mode: flags.mode || "exact",
+    input: domain,
     domain: normalizeDomain(domain),
+    source_type: "provided",
+    candidate_type: "brandable",
+    description: null,
+    description_source: "none",
   }));
 
-  if (words.length === 0) {
+  if (bareInputs.length === 0) {
     return candidates;
   }
 
   if ((flags.mode || "exact") === "hack") {
+    const words = normalizeWords(bareInputs, {
+      minWordLength: flags["min-word-length"] ?? 1,
+      maxWordLength: flags["max-word-length"] ?? 64,
+    });
     return [
       ...candidates,
       ...generateHackCandidates(words, {
         tlds: flags.tlds,
         minLabelLength: flags["min-label-length"],
         maxDomainLength: flags["max-domain-length"],
-      }),
+      }).map((candidate) => ({
+        ...candidate,
+        input: candidate.word,
+        source_type: "provided",
+        candidate_type: "brandable",
+        description: null,
+        description_source: "none",
+      })),
     ];
   }
 
-  const tlds = flags.tlds;
-  if (!tlds && domains.length === 0) {
-    throw new Error("Bare words for `check` require `--tlds` or explicit domains.");
+  if (!flags.tlds && explicitDomains.length === 0) {
+    return [
+      ...candidates,
+      ...bareInputs.map((input) =>
+        normalizeCandidate({
+          mode: "exact",
+          input,
+          domain: `${input}.com`,
+          label: input,
+          candidate_type: "brandable",
+          source_type: "provided",
+        }),
+      ),
+    ];
   }
+
+  const words = normalizeWords(bareInputs, {
+    minWordLength: flags["min-word-length"] ?? 1,
+    maxWordLength: flags["max-word-length"] ?? 64,
+  });
 
   return [
     ...candidates,
     ...generateExactCandidates(words, {
-      tlds,
-    }),
+      tlds: flags.tlds,
+    }).map((candidate) => ({
+      ...candidate,
+      input: candidate.word,
+      source_type: "provided",
+      candidate_type: "brandable",
+      description: null,
+      description_source: "none",
+    })),
   ];
 }
 

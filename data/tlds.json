@@ -9,6 +9,24 @@
     "fallback_registration_provider": "Namecheap"
   },
   {
+    "tld": "at",
+    "annual_price_usd": 17.98,
+    "price_updated_at": "2026-03-29",
+    "price_source_name": "Namecheap full TLD list",
+    "price_source_url": "https://www.namecheap.com/domains/full-tld-list/",
+    "preferred_registration_provider": "Cloudflare",
+    "fallback_registration_provider": "Namecheap"
+  },
+  {
+    "tld": "be",
+    "annual_price_usd": 9.98,
+    "price_updated_at": "2026-03-29",
+    "price_source_name": "Namecheap full TLD list",
+    "price_source_url": "https://www.namecheap.com/domains/full-tld-list/",
+    "preferred_registration_provider": "Cloudflare",
+    "fallback_registration_provider": "Namecheap"
+  },
+  {
     "tld": "ca",
     "annual_price_usd": 14.98,
     "price_updated_at": "2026-03-29",
@@ -36,12 +54,30 @@
     "fallback_registration_provider": "Namecheap"
   },
   {
+    "tld": "de",
+    "annual_price_usd": 8.98,
+    "price_updated_at": "2026-03-29",
+    "price_source_name": "Namecheap full TLD list",
+    "price_source_url": "https://www.namecheap.com/domains/full-tld-list/",
+    "preferred_registration_provider": "Cloudflare",
+    "fallback_registration_provider": "Namecheap"
+  },
+  {
     "tld": "dev",
     "annual_price_usd": 20.98,
     "price_updated_at": "2026-03-29",
     "price_source_name": "Namecheap full TLD list",
     "price_source_url": "https://www.namecheap.com/domains/full-tld-list/",
     "preferred_registration_provider": "Cloudflare",
+    "fallback_registration_provider": "Namecheap"
+  },
+  {
+    "tld": "es",
+    "annual_price_usd": 12.98,
+    "price_updated_at": "2026-03-29",
+    "price_source_name": "Namecheap full TLD list",
+    "price_source_url": "https://www.namecheap.com/domains/full-tld-list/",
+    "preferred_registration_provider": "Namecheap",
     "fallback_registration_provider": "Namecheap"
   },
   {
@@ -74,6 +110,15 @@
   {
     "tld": "is",
     "annual_price_usd": 49.98,
+    "price_updated_at": "2026-03-29",
+    "price_source_name": "Namecheap full TLD list",
+    "price_source_url": "https://www.namecheap.com/domains/full-tld-list/",
+    "preferred_registration_provider": "Namecheap",
+    "fallback_registration_provider": "Namecheap"
+  },
+  {
+    "tld": "it",
+    "annual_price_usd": 14.98,
     "price_updated_at": "2026-03-29",
     "price_source_name": "Namecheap full TLD list",
     "price_source_url": "https://www.namecheap.com/domains/full-tld-list/",
@@ -114,6 +159,51 @@
     "price_source_name": "Namecheap full TLD list",
     "price_source_url": "https://www.namecheap.com/domains/full-tld-list/",
     "preferred_registration_provider": "Cloudflare",
+    "fallback_registration_provider": "Namecheap"
+  },
+  {
+    "tld": "pt",
+    "annual_price_usd": 9.98,
+    "price_updated_at": "2026-03-29",
+    "price_source_name": "Namecheap full TLD list",
+    "price_source_url": "https://www.namecheap.com/domains/full-tld-list/",
+    "preferred_registration_provider": "Namecheap",
+    "fallback_registration_provider": "Namecheap"
+  },
+  {
+    "tld": "re",
+    "annual_price_usd": 17.98,
+    "price_updated_at": "2026-03-29",
+    "price_source_name": "Namecheap full TLD list",
+    "price_source_url": "https://www.namecheap.com/domains/full-tld-list/",
+    "preferred_registration_provider": "Namecheap",
+    "fallback_registration_provider": "Namecheap"
+  },
+  {
+    "tld": "se",
+    "annual_price_usd": 14.98,
+    "price_updated_at": "2026-03-29",
+    "price_source_name": "Namecheap full TLD list",
+    "price_source_url": "https://www.namecheap.com/domains/full-tld-list/",
+    "preferred_registration_provider": "Namecheap",
+    "fallback_registration_provider": "Namecheap"
+  },
+  {
+    "tld": "sh",
+    "annual_price_usd": 26.98,
+    "price_updated_at": "2026-03-29",
+    "price_source_name": "Namecheap full TLD list",
+    "price_source_url": "https://www.namecheap.com/domains/full-tld-list/",
+    "preferred_registration_provider": "Namecheap",
+    "fallback_registration_provider": "Namecheap"
+  },
+  {
+    "tld": "st",
+    "annual_price_usd": 24.98,
+    "price_updated_at": "2026-03-29",
+    "price_source_name": "Namecheap full TLD list",
+    "price_source_url": "https://www.namecheap.com/domains/full-tld-list/",
+    "preferred_registration_provider": "Namecheap",
     "fallback_registration_provider": "Namecheap"
   },
   {

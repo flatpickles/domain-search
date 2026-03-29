@@ -1,11 +1,16 @@
 # domain-search
 
-`domain-search` is a phase-based, unopinionated domain search toolkit for agents and humans. It helps you:
+`domain-search` is a phase-based, unopinionated domain search toolkit for agents and humans. It supports both:
 
-- generate ranked domain candidates from words and TLDs
-- filter those candidates however you want outside the tool
-- check availability for a shortlist
-- attach bundled TLD pricing, registration links, and optional short definitions
+- real-word, wordlist-driven exploration
+- invented or brandable shortlists supplied directly by a user or agent
+
+It helps you:
+
+- generate ranked candidates from words and TLDs
+- check direct shortlists of names or domains
+- filter externally however you want
+- attach bundled TLD pricing, registration links, and optional short descriptions
 
 The tool does not try to understand themes, aesthetics, or semantic nuance. It is designed to be composed with external filtering and taste judgment.
 
@@ -14,35 +19,47 @@ The tool does not try to understand themes, aesthetics, or semantic nuance. It i
 - Node.js 22 or newer
 - `whois` on your `PATH`
 - network access for live WHOIS lookups
-- optional network access for definition fetching
+- optional network access for description fetching
 
-The repo includes a bundled fallback wordlist at [`data/words.txt`](./data/words.txt).
+The bundled wordlist at [`data/words.txt`](./data/words.txt) is a convenience, not a requirement.
 
 ## CLI
 
 The main commands are:
 
-- `generate`: rank candidates only
-- `check`: WHOIS-check a shortlist, direct domains, or JSON candidate input
+- `generate`: rank wordlist-derived candidates only
+- `check`: WHOIS-check a shortlist, JSON candidate input, or direct domains/names
 - `search`: convenience wrapper for `generate` + `check`
 - `prices`: inspect bundled TLD pricing and registrar metadata
 
-Generate candidates:
+Real-word workflow:
 
 ```bash
 node bin/domain-search.js generate \
   --mode hack \
   --tlds st,re,se,it \
-  --words-file ./my-words.txt \
-  --limit 50
+  --words-file ./words.txt \
+  --limit 100
 ```
 
-Filter externally, then check a shortlist:
+Then filter externally and check:
 
 ```bash
-node bin/domain-search.js generate --mode hack --words-file ./my-words.txt \
+node bin/domain-search.js generate --mode hack --words-file ./words.txt \
   | jq '.candidates[:20]' \
   | node bin/domain-search.js check --input - --progress-format human
+```
+
+Brandable shortlist workflow:
+
+```bash
+cat shortlist.json | node bin/domain-search.js check --input - --progress-format human
+```
+
+Plain text domain list workflow:
+
+```bash
+printf "walk.in\nromp.in\nleashr.me\n" | node bin/domain-search.js check --input -
 ```
 
 One-shot search:
@@ -51,7 +68,7 @@ One-shot search:
 node bin/domain-search.js search \
   --mode exact \
   --tlds com,net,org \
-  --words-file ./my-words.txt \
+  --words-file ./words.txt \
   --limit 20 \
   --progress-format human
 ```
@@ -62,9 +79,21 @@ Bundled pricing:
 node bin/domain-search.js prices --max-price 20
 ```
 
+## Descriptions
+
+Results use a unified `description` field:
+
+- for real words, `--with-descriptions` can fetch one short dictionary-backed description
+- for brandables, agent- or user-supplied descriptions are preserved
+- if no description is available, the field remains null
+
+This is intentional: not every good domain candidate is a dictionary word.
+
 ## Pricing And Registrars
 
 Bundled TLD pricing is advisory, static, and intentionally dated. The current bundle was updated as of `2026-03-29` from Namecheap's public TLD pricing page and may now be out of date.
+
+The bundle now includes a broader set of hack-friendly and business-relevant TLDs, but coverage is still incomplete. Unknown or unsupported TLDs remain representable in output.
 
 Result objects include:
 
@@ -85,7 +114,7 @@ const {
   generateHackCandidates,
   generateExactCandidates,
   checkDomain,
-  fetchDefinition,
+  fetchDescription,
   formatResults,
 } = require("domain-search");
 ```

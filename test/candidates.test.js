@@ -3,6 +3,7 @@ const assert = require("node:assert/strict");
 const {
   generateHackCandidates,
   generateExactCandidates,
+  scoreBrandable,
 } = require("../lib/candidates");
 
 test("generateHackCandidates builds hack domains from requested TLDs", () => {
@@ -36,4 +37,9 @@ test("generic prefixes and awkward clusters are de-boosted", () => {
   const prefixed = generateExactCandidates(["pseudosunrise"], { tlds: ["com"] })[0];
 
   assert.ok(plain.score > prefixed.score);
+});
+
+test("brandable scoring de-boosts awkward doubled endings", () => {
+  assert.ok(scoreBrandable("walkr") > scoreBrandable("walkrr"));
+  assert.ok(scoreBrandable("leashly") > scoreBrandable("leashrr"));
 });

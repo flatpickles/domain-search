@@ -1,7 +1,7 @@
 {
   "name": "domain-search",
   "version": "0.1.0",
-  "description": "Dictionary-driven domain search for hacks and exact TLDs, with a bundled Codex skill.",
+  "description": "Phase-based domain search for real words and brandables, with pricing metadata and a bundled skill.",
   "type": "commonjs",
   "main": "index.js",
   "bin": {
@@ -26,6 +26,7 @@
   "keywords": [
     "domains",
     "domain-hacks",
+    "brandable-domains",
     "whois",
     "codex-skill"
   ],

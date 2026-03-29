@@ -97,6 +97,29 @@ test("check can surface UNKNOWN results when requested", () => {
   assert.equal(parsed.results[0].status, "UNKNOWN");
 });
 
+test("check accepts plain text domain lists from stdin", () => {
+  const output = execFileSync(
+    "zsh",
+    [
+      "-lc",
+      `export PATH="${fakeBinDir}:$PATH"; printf "walk.in\\nleashr.me\\n" | node "${cliPath}" check --input - --progress-format silent`,
+    ],
+    {
+      cwd: repoRoot,
+      encoding: "utf8",
+      env: process.env,
+    },
+  );
+  const parsed = JSON.parse(output);
+
+  assert.equal(parsed.kind, "check");
+  assert.equal(parsed.results.length, 2);
+  assert.deepEqual(
+    parsed.results.map((item) => item.domain),
+    ["walk.in", "leashr.me"],
+  );
+});
+
 test("prices filters bundled metadata by max price", () => {
   const output = runCli([
     "prices",

@@ -31,8 +31,38 @@ test("checkCandidates preserves metadata and can include unknown results", async
   assert.equal(summary.available, 1);
   assert.equal(summary.unknown, 1);
   assert.equal(summary.results[0].word, "chemist");
+  assert.equal(summary.results[0].candidate_type, "brandable");
+  assert.equal(summary.results[0].source_type, "provided");
   assert.equal(summary.results[1].status, "UNKNOWN");
   assert.ok(summary.results[0].registration_url);
+});
+
+test("checkCandidates preserves provided brandable descriptions", async () => {
+  const summary = await checkCandidates({
+    candidates: [
+      {
+        mode: "exact",
+        input: "leashr",
+        domain: "leashr.me",
+        label: "leashr",
+        candidate_type: "brandable",
+        source_type: "provided",
+        description: "Short, upbeat dog-walking brand.",
+        description_source: "agent",
+      },
+    ],
+    withDescriptions: true,
+    progressFormat: "silent",
+    checkDomainFn: async () => ({
+      status: "AVAILABLE",
+    }),
+    fetchDescriptionFn: async () => {
+      throw new Error("brandable descriptions should not be fetched");
+    },
+  });
+
+  assert.equal(summary.results[0].description, "Short, upbeat dog-walking brand.");
+  assert.equal(summary.results[0].description_source, "agent");
 });
 
 test("searchDomains combines generate and check phases", async () => {
@@ -57,4 +87,13 @@ test("getTldPricing can return explicit unknown TLD placeholders", () => {
   const pricing = getTldPricing({ tlds: ["madeup"] });
   assert.equal(pricing.items[0].tld, "madeup");
   assert.equal(pricing.items[0].annual_price_usd, null);
+});
+
+test("getTldPricing exposes broader hack-friendly price coverage under a max price", () => {
+  const pricing = getTldPricing({ maxPrice: 30 });
+  const tlds = new Set(pricing.items.map((item) => item.tld));
+
+  assert.ok(tlds.has("sh"));
+  assert.ok(tlds.has("in"));
+  assert.ok(tlds.has("me"));
 });

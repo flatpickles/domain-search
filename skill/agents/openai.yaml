@@ -1,7 +1,7 @@
 interface:
   display_name: "Domain Search"
-  short_description: "Search hacks and exact TLD domains"
-  default_prompt: "Use $domain-search to find dictionary-driven domain hacks or exact-TLD domain candidates."
+  short_description: "Generate and check real-word or brandable domains"
+  default_prompt: "Use $domain-search to generate or check real-word and brandable domain candidates with pricing and registrar metadata."
 
 policy:
   allow_implicit_invocation: true

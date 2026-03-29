@@ -35,8 +35,10 @@ test("formatResults emits markdown for checked results with registrar metadata",
       {
         word: "chemist",
         domain: "chemi.st",
-        definition: "A scientist or expert in chemistry.",
-        definitionSource: "https://en.wiktionary.org/wiki/chemist",
+        description: "A scientist or expert in chemistry.",
+        description_source: "wiktionary",
+        description_url: "https://en.wiktionary.org/wiki/chemist",
+        candidate_type: "real_word",
         registration_provider: "Namecheap",
         registration_url: "https://example.test",
         price: 18.48,
@@ -46,6 +48,41 @@ test("formatResults emits markdown for checked results with registrar metadata",
 
   assert.match(output, /Register via \[Namecheap\]/);
   assert.match(output, /Renewal: \$18.48/);
+  assert.match(output, /A scientist or expert in chemistry/);
+});
+
+test("formatResults groups mixed real-word and brandable results", () => {
+  const output = formatResults({
+    kind: "check",
+    mode: "hack",
+    tlds: ["in", "me"],
+    checked: 2,
+    candidatePool: 2,
+    available: 2,
+    unknown: 0,
+    results: [
+      {
+        word: "walkin",
+        input: "walkin",
+        domain: "walk.in",
+        description: "To move at a regular pace by lifting and setting down each foot in turn.",
+        description_source: "dictionaryapi",
+        candidate_type: "real_word",
+      },
+      {
+        input: "leashr",
+        label: "leashr",
+        domain: "leashr.me",
+        description: "Friendly dog-walking brand.",
+        description_source: "agent",
+        candidate_type: "brandable",
+      },
+    ],
+  });
+
+  assert.match(output, /Best Real-Word \/ Natural Hits/);
+  assert.match(output, /Best Brandable \/ Coined Hits/);
+  assert.match(output, /Friendly dog-walking brand/);
 });
 
 test("formatResults emits json when requested", () => {
