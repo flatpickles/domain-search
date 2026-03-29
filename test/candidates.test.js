@@ -30,3 +30,10 @@ test("generateExactCandidates expands words across multiple TLDs", () => {
     ["sunrise.com", "sunrise.net"],
   );
 });
+
+test("generic prefixes and awkward clusters are de-boosted", () => {
+  const plain = generateExactCandidates(["sunrise"], { tlds: ["com"] })[0];
+  const prefixed = generateExactCandidates(["pseudosunrise"], { tlds: ["com"] })[0];
+
+  assert.ok(plain.score > prefixed.score);
+});

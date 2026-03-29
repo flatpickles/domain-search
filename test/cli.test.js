@@ -5,23 +5,25 @@ const path = require("node:path");
 
 const repoRoot = path.join(__dirname, "..");
 const cliPath = path.join(repoRoot, "bin", "domain-search.js");
+const skillScriptPath = path.join(repoRoot, "skill", "scripts", "domain-search.sh");
 const fixtureWords = path.join(__dirname, "fixtures", "words-small.txt");
 const fakeBinDir = path.join(__dirname, "fixtures");
 
-function runCli(args) {
+function runCli(args, options = {}) {
   return execFileSync("node", [cliPath, ...args], {
-    cwd: repoRoot,
+    cwd: options.cwd || repoRoot,
     encoding: "utf8",
     env: {
       ...process.env,
       PATH: `${fakeBinDir}:${process.env.PATH}`,
-      DOMAIN_SEARCH_DISABLE_DEFINITIONS: "1",
     },
   });
 }
 
-test("hack command supports offline smoke testing with a fake whois binary", () => {
+test("generate emits candidate JSON without WHOIS status", () => {
   const output = runCli([
+    "generate",
+    "--mode",
     "hack",
     "--tlds",
     "se,st",
@@ -29,24 +31,40 @@ test("hack command supports offline smoke testing with a fake whois binary", () 
     fixtureWords,
     "--limit",
     "2",
-    "--format",
-    "json",
   ]);
   const parsed = JSON.parse(output);
 
+  assert.equal(parsed.kind, "generate");
   assert.equal(parsed.mode, "hack");
+  assert.equal(parsed.candidates.length, 2);
+  assert.equal(parsed.candidates[0].status, undefined);
+});
+
+test("check supports JSON handoff from generate output", () => {
+  const shellOutput = execFileSync(
+    "zsh",
+    [
+      "-lc",
+      `export PATH="${fakeBinDir}:$PATH"; node "${cliPath}" generate --mode hack --tlds se,st --words-file "${fixtureWords}" --limit 2 | node "${cliPath}" check --input - --progress-format silent`,
+    ],
+    {
+      cwd: repoRoot,
+      encoding: "utf8",
+      env: process.env,
+    },
+  );
+  const parsed = JSON.parse(shellOutput);
+
+  assert.equal(parsed.kind, "check");
+  assert.equal(parsed.available, 2);
   assert.equal(parsed.results.length, 2);
-  assert.ok(parsed.results.every((item) => item.status === "AVAILABLE"));
-  assert.ok(parsed.results.some((item) => item.domain.endsWith(".st") || item.domain.endsWith(".se")));
+  assert.ok(parsed.results.every((item) => item.registration_provider));
 });
 
-test("check command normalizes domains and prints statuses", () => {
-  const output = runCli(["check", "https://example.com/path"]);
-  assert.match(output, /^AVAILABLE\texample\.com$/m);
-});
-
-test("exact command supports offline smoke testing with multiple TLDs", () => {
+test("search runs generate plus check with exact mode", () => {
   const output = runCli([
+    "search",
+    "--mode",
     "exact",
     "--tlds",
     "com,net",
@@ -54,12 +72,68 @@ test("exact command supports offline smoke testing with multiple TLDs", () => {
     fixtureWords,
     "--limit",
     "2",
-    "--format",
-    "json",
+    "--progress-format",
+    "silent",
   ]);
   const parsed = JSON.parse(output);
 
+  assert.equal(parsed.kind, "search");
   assert.equal(parsed.mode, "exact");
   assert.equal(parsed.results.length, 2);
   assert.ok(parsed.results.every((item) => ["com", "net"].includes(item.tld)));
+});
+
+test("check can surface UNKNOWN results when requested", () => {
+  const output = runCli([
+    "check",
+    "unknown.test",
+    "--show-unknown",
+    "--progress-format",
+    "silent",
+  ]);
+  const parsed = JSON.parse(output);
+
+  assert.equal(parsed.unknown, 1);
+  assert.equal(parsed.results[0].status, "UNKNOWN");
+});
+
+test("prices filters bundled metadata by max price", () => {
+  const output = runCli([
+    "prices",
+    "--max-price",
+    "20",
+  ]);
+  const parsed = JSON.parse(output);
+
+  assert.ok(parsed.items.some((item) => item.tld === "com"));
+  assert.ok(parsed.items.every((item) => item.annual_price_usd === null || item.annual_price_usd <= 20));
+});
+
+test("skill launcher works from the skill directory", () => {
+  const output = execFileSync(
+    skillScriptPath,
+    [
+      "generate",
+      "--mode",
+      "hack",
+      "--tlds",
+      "se,st",
+      "--words-file",
+      fixtureWords,
+      "--limit",
+      "1",
+    ],
+    {
+      cwd: path.join(repoRoot, "skill"),
+      encoding: "utf8",
+      env: {
+        ...process.env,
+        PATH: `${fakeBinDir}:${process.env.PATH}`,
+      },
+    },
+  );
+  const parsed = JSON.parse(output);
+
+  assert.equal(parsed.kind, "generate");
+  assert.equal(parsed.candidates.length, 1);
 });

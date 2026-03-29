@@ -1,11 +1,13 @@
 # domain-search
 
-`domain-search` is a reusable domain-hunting toolkit. It searches dictionary words for either:
+`domain-search` is a phase-based, unopinionated domain search toolkit for agents and humans. It helps you:
 
-- domain hacks, where the TLD is used as part of the word
-- exact domains across one or more target TLDs such as `.com`, `.net`, or `.org`
+- generate ranked domain candidates from words and TLDs
+- filter those candidates however you want outside the tool
+- check availability for a shortlist
+- attach bundled TLD pricing, registration links, and optional short definitions
 
-The repo ships as a reusable Node library, a CLI, and a bundled Codex Skill.
+The tool does not try to understand themes, aesthetics, or semantic nuance. It is designed to be composed with external filtering and taste judgment.
 
 ## Requirements
 
@@ -14,46 +16,72 @@ The repo ships as a reusable Node library, a CLI, and a bundled Codex Skill.
 - network access for live WHOIS lookups
 - optional network access for definition fetching
 
-The repo includes a bundled fallback wordlist at [`data/words.txt`](./data/words.txt), and you can override it with `--words-file`.
+The repo includes a bundled fallback wordlist at [`data/words.txt`](./data/words.txt).
 
 ## CLI
 
-Hack search:
+The main commands are:
+
+- `generate`: rank candidates only
+- `check`: WHOIS-check a shortlist, direct domains, or JSON candidate input
+- `search`: convenience wrapper for `generate` + `check`
+- `prices`: inspect bundled TLD pricing and registrar metadata
+
+Generate candidates:
 
 ```bash
-node bin/domain-search.js hack \
+node bin/domain-search.js generate \
+  --mode hack \
   --tlds st,re,se,it \
-  --limit 20 \
-  --max-domain-length 10
+  --words-file ./my-words.txt \
+  --limit 50
 ```
 
-Exact-TLD search:
+Filter externally, then check a shortlist:
 
 ```bash
-node bin/domain-search.js exact \
+node bin/domain-search.js generate --mode hack --words-file ./my-words.txt \
+  | jq '.candidates[:20]' \
+  | node bin/domain-search.js check --input - --progress-format human
+```
+
+One-shot search:
+
+```bash
+node bin/domain-search.js search \
+  --mode exact \
   --tlds com,net,org \
+  --words-file ./my-words.txt \
   --limit 20 \
-  --min-word-length 6 \
-  --max-word-length 10
+  --progress-format human
 ```
 
-Direct checks:
+Bundled pricing:
 
 ```bash
-node bin/domain-search.js check chemi.st example.com
+node bin/domain-search.js prices --max-price 20
 ```
 
-Offline-ish local testing is easier if you disable live definition lookups:
+## Pricing And Registrars
 
-```bash
-DOMAIN_SEARCH_DISABLE_DEFINITIONS=1 node bin/domain-search.js exact --tlds com
-```
+Bundled TLD pricing is advisory, static, and intentionally dated. The current bundle was updated as of `2026-03-29` from Namecheap's public TLD pricing page and may now be out of date.
+
+Result objects include:
+
+- bundled annual price metadata when the TLD is known
+- a preferred registrar when configured
+- an actionable registration URL
+
+Cloudflare is treated as the preferred registrar where configured, but because Cloudflare does not provide a universally useful public search URL, actionable registration links may fall back to Namecheap.
 
 ## Library
 
 ```js
 const {
+  generateCandidates,
+  checkCandidates,
   searchDomains,
+  getTldPricing,
   generateHackCandidates,
   generateExactCandidates,
   checkDomain,
@@ -62,51 +90,47 @@ const {
 } = require("domain-search");
 ```
 
-## Repo layout
+## Repo Layout
 
-- [`bin/domain-search.js`](./bin/domain-search.js) is the CLI.
-- [`lib/`](./lib) contains reusable search logic.
-- [`skill/`](./skill) contains the Codex Skill.
-- [`examples/`](./examples) contains sample output only.
-
-This public repo intentionally omits any private curated inventory.
+- [`bin/domain-search.js`](./bin/domain-search.js): CLI entrypoint
+- [`lib/`](./lib): search, pricing, formatting, and WHOIS logic
+- [`data/tlds.json`](./data/tlds.json): bundled TLD pricing metadata
+- [`skill/`](./skill): packaged skill plus launcher script
 
 ## Add To Codex Or Claude Code
 
 The skill lives in [`skill/SKILL.md`](./skill/SKILL.md). The recommended setup for both tools is:
 
 1. Clone this repo somewhere local.
-2. Symlink the repo's `skill/` directory into the tool's personal skills folder.
+2. Symlink the repo's `skill/` directory into the tool's personal or project skill folder.
 
-Codex local install:
+Codex:
 
 ```bash
 mkdir -p ~/.codex/skills
 ln -s /path/to/domain-search/skill ~/.codex/skills/domain-search
 ```
 
-Claude Code personal install:
+Claude Code personal:
 
 ```bash
 mkdir -p ~/.claude/skills
 ln -s /path/to/domain-search/skill ~/.claude/skills/domain-search
 ```
 
-Claude Code project-local install:
+Claude Code project-local:
 
 ```bash
 mkdir -p .claude/skills
 ln -s /path/to/domain-search/skill .claude/skills/domain-search
 ```
 
-Symlinking is preferred over copying because the skill expects the packaged CLI to remain in the same checkout.
+The packaged launcher script is [`skill/scripts/domain-search.sh`](./skill/scripts/domain-search.sh). It resolves the real repo path, so the skill can invoke the CLI even when `skill/` is symlinked into another tool directory.
 
 Public references:
 
-- OpenAI's Codex app announcement says skills can be checked into a repository and then used across the app, CLI, and IDE extension: [Introducing the Codex app](https://openai.com/index/introducing-the-codex-app/).
-- Anthropic's Claude Code docs describe personal skills at `~/.claude/skills/<skill-name>/SKILL.md`, project skills at `.claude/skills/<skill-name>/SKILL.md`, and sharing by committing `.claude/skills/` to version control: [Extend Claude with skills](https://code.claude.com/docs/en/slash-commands).
-
-In practice, this repo keeps a single canonical `skill/` directory and lets each tool consume it by symlink.
+- OpenAI's Codex app announcement notes that skills can be checked into a repository and used across the app, CLI, and IDE extension: [Introducing the Codex app](https://openai.com/index/introducing-the-codex-app/).
+- Anthropic's Claude Code docs describe personal and project skill directories and the `SKILL.md` format: [Extend Claude with skills](https://code.claude.com/docs/en/slash-commands).
 
 ## Tests
 

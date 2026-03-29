@@ -2,40 +2,71 @@
 
 const fs = require("node:fs");
 const path = require("node:path");
-const { formatResults, searchDomains, checkDomain } = require("..");
+const {
+  checkCandidates,
+  checkDomain,
+  formatResults,
+  generateCandidates,
+  generateExactCandidates,
+  generateHackCandidates,
+  getTldPricing,
+  searchDomains,
+} = require("..");
+const { normalizeWords } = require("../lib/words");
+const { normalizeDomain } = require("../lib/whois");
 
 function usage() {
   const script = path.basename(process.argv[1]);
   return [
-    `Usage: ${script} <hack|exact|check> [options]`,
+    `Usage: ${script} <generate|check|search|prices> [options]`,
     "",
     "Commands:",
-    "  hack   Search domain hacks from dictionary words",
-    "  exact  Search exact domains across one or more TLDs",
-    "  check  Check one or more domains directly",
+    "  generate  Generate ranked candidates only",
+    "  check     Check a shortlist, JSON input, or direct domains/words",
+    "  search    Convenience wrapper for generate + check",
+    "  prices    Show bundled TLD pricing and registrar metadata",
     "",
-    "Common options:",
-    "  --tlds <list>              Comma-separated TLDs",
-    "  --limit <n>               Stop after finding n available domains",
-    "  --concurrency <n>         Concurrent WHOIS checks",
-    "  --max-checks <n>          Maximum WHOIS checks",
-    "  --words-file <path>       Override the bundled fallback word list",
-    "  --output <path>           Write output to a file",
-    "  --format <markdown|json>  Output format for search commands",
+    "Shared options:",
+    "  --mode <hack|exact>           Candidate mode for generate/search and bare-word checks",
+    "  --tlds <list>                Comma-separated TLDs",
+    "  --limit <n>                  Result limit",
+    "  --max-checks <n>             Maximum WHOIS checks",
+    "  --max-price <n>              Use bundled TLD prices to limit selected TLDs",
+    "  --all                        Use every TLD in bundled pricing metadata",
+    "  --format <json|markdown>     Output format",
+    "  --output <path>              Write stdout payload to a file",
+    "",
+    "Input options:",
+    "  --words-file <path|- >       Read newline words from a file or stdin",
+    "  --input <path|- >            Read candidate JSON from a file or stdin",
+    "",
+    "Check/search options:",
+    "  --concurrency <n>            Concurrent WHOIS checks",
+    "  --with-definitions           Fetch one short definition for available results",
+    "  --show-unknown               Include UNKNOWN WHOIS results",
+    "  --progress-format <human|jsonl|silent>",
     "",
     "Word filtering:",
     "  --min-word-length <n>",
     "  --max-word-length <n>",
-    "",
-    "Hack-only options:",
     "  --min-label-length <n>",
     "  --max-domain-length <n>",
+    "",
+    "Legacy aliases:",
+    `  ${script} hack ...   => ${script} search --mode hack ...`,
+    `  ${script} exact ...  => ${script} search --mode exact ...`,
   ].join("\n");
 }
 
 function parseArgs(argv) {
   const flags = {};
   const positional = [];
+  const booleanFlags = new Set([
+    "all",
+    "help",
+    "show-unknown",
+    "with-definitions",
+  ]);
 
   for (let i = 0; i < argv.length; i += 1) {
     const token = argv[i];
@@ -49,12 +80,24 @@ function parseArgs(argv) {
     }
 
     const [key, inlineValue] = token.split("=", 2);
-    const value = inlineValue ?? argv[i + 1];
+    const normalizedKey = key.slice(2);
+
+    if (inlineValue !== undefined) {
+      flags[normalizedKey] = inlineValue;
+      continue;
+    }
+
+    if (booleanFlags.has(normalizedKey)) {
+      flags[normalizedKey] = true;
+      continue;
+    }
+
+    const value = argv[i + 1];
     if (value === undefined) {
       throw new Error(`Missing value for ${key}`);
     }
-    flags[key.slice(2)] = value;
-    if (!inlineValue) i += 1;
+    flags[normalizedKey] = value;
+    i += 1;
   }
 
   return {
@@ -64,33 +107,161 @@ function parseArgs(argv) {
   };
 }
 
-function toSearchOptions(command, flags) {
+function readTextInput(inputPath) {
+  return inputPath === "-"
+    ? fs.readFileSync(0, "utf8")
+    : fs.readFileSync(inputPath, "utf8");
+}
+
+function parseCandidateInput(inputPath) {
+  const raw = readTextInput(inputPath);
+  const parsed = JSON.parse(raw);
+
+  if (Array.isArray(parsed)) return parsed;
+  if (Array.isArray(parsed.candidates)) return parsed.candidates;
+  if (Array.isArray(parsed.results)) return parsed.results;
+
+  throw new Error("Expected a JSON array or an object with `candidates` or `results`.");
+}
+
+function toGenerateOptions(flags, options = {}) {
   return {
-    mode: command,
+    mode: flags.mode,
     tlds: flags.tlds,
-    limit: flags.limit,
-    concurrency: flags.concurrency,
-    maxChecks: flags["max-checks"],
     wordsFile: flags["words-file"],
-    format: flags.format || "markdown",
     minWordLength: flags["min-word-length"],
     maxWordLength: flags["max-word-length"],
     minLabelLength: flags["min-label-length"],
     maxDomainLength: flags["max-domain-length"],
+    emitLimit: options.includeEmitLimit ? flags.limit : undefined,
+    maxPrice: flags["max-price"],
+    all: Boolean(flags.all),
   };
 }
 
+function toCheckOptions(flags) {
+  return {
+    mode: flags.mode,
+    tlds: flags.tlds,
+    limit: flags.limit,
+    concurrency: flags.concurrency,
+    maxChecks: flags["max-checks"],
+    showUnknown: Boolean(flags["show-unknown"]),
+    withDefinitions: Boolean(flags["with-definitions"]),
+    progressFormat: flags["progress-format"] || "human",
+  };
+}
+
+function createCandidatesFromArgs(args, flags) {
+  const domains = args.filter((value) => value.includes("."));
+  const words = normalizeWords(args.filter((value) => !value.includes(".")), {
+    minWordLength: flags["min-word-length"] ?? 1,
+    maxWordLength: flags["max-word-length"] ?? 64,
+  });
+  const candidates = domains.map((domain) => ({
+    mode: flags.mode || "exact",
+    domain: normalizeDomain(domain),
+  }));
+
+  if (words.length === 0) {
+    return candidates;
+  }
+
+  if ((flags.mode || "exact") === "hack") {
+    return [
+      ...candidates,
+      ...generateHackCandidates(words, {
+        tlds: flags.tlds,
+        minLabelLength: flags["min-label-length"],
+        maxDomainLength: flags["max-domain-length"],
+      }),
+    ];
+  }
+
+  const tlds = flags.tlds;
+  if (!tlds && domains.length === 0) {
+    throw new Error("Bare words for `check` require `--tlds` or explicit domains.");
+  }
+
+  return [
+    ...candidates,
+    ...generateExactCandidates(words, {
+      tlds,
+    }),
+  ];
+}
+
+function writeOutput(output, flags) {
+  if (flags.output) {
+    fs.writeFileSync(flags.output, output);
+    return;
+  }
+
+  process.stdout.write(output);
+}
+
 async function run() {
-  const { command, args, flags } = parseArgs(process.argv.slice(2));
+  const parsed = parseArgs(process.argv.slice(2));
+  let { command } = parsed;
+  const { args, flags } = parsed;
+
+  if (command === "hack" || command === "exact") {
+    flags.mode = command;
+    command = "search";
+  }
 
   if (flags.help || !command) {
     process.stdout.write(`${usage()}\n`);
     process.exit(command ? 0 : 1);
   }
 
+  if (command === "prices") {
+    const summary = getTldPricing({
+      tlds: flags.tlds,
+      maxPrice: flags["max-price"],
+      all: Boolean(flags.all),
+    });
+    writeOutput(formatResults(summary, { format: flags.format || "json" }), flags);
+    return;
+  }
+
+  if (command === "generate") {
+    const summary = generateCandidates(toGenerateOptions(flags, { includeEmitLimit: true }));
+    writeOutput(formatResults(summary, { format: flags.format || "json" }), flags);
+    return;
+  }
+
   if (command === "check") {
+    let candidates = [];
+
+    if (flags.input) {
+      candidates = parseCandidateInput(flags.input);
+    } else if (args.length > 0) {
+      candidates = createCandidatesFromArgs(args, flags);
+    } else {
+      throw new Error("The check command requires `--input` or one or more domains/words.");
+    }
+
+    const summary = await checkCandidates({
+      ...toCheckOptions(flags),
+      candidates,
+    });
+    writeOutput(formatResults(summary, { format: flags.format || "json" }), flags);
+    return;
+  }
+
+  if (command === "search") {
+    const summary = await searchDomains({
+      ...toGenerateOptions(flags),
+      ...toCheckOptions(flags),
+    });
+    writeOutput(formatResults(summary, { format: flags.format || "json" }), flags);
+    return;
+  }
+
+  if (command === "check-domain") {
     if (args.length === 0) {
-      throw new Error("The check command requires one or more domain arguments.");
+      throw new Error("The check-domain command requires one or more domains.");
     }
     for (const input of args) {
       const result = await checkDomain(input);
@@ -99,33 +270,7 @@ async function run() {
     return;
   }
 
-  if (!["hack", "exact"].includes(command)) {
-    throw new Error(`Unknown command: ${command}`);
-  }
-
-  const summary = await searchDomains(toSearchOptions(command, flags));
-  const output = formatResults(summary, { format: flags.format });
-
-  if (flags.output) {
-    fs.writeFileSync(flags.output, output);
-  } else {
-    process.stdout.write(output);
-  }
-
-  process.stderr.write(
-    `${JSON.stringify(
-      {
-        mode: summary.mode,
-        tlds: summary.tlds,
-        checked: summary.checked,
-        candidatePool: summary.candidatePool,
-        available: summary.available,
-        output: flags.output || null,
-      },
-      null,
-      2,
-    )}\n`,
-  );
+  throw new Error(`Unknown command: ${command}`);
 }
 
 run().catch((error) => {

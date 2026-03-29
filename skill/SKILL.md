@@ -1,32 +1,65 @@
 ---
 name: domain-search
-description: Use when you need to search dictionary-driven domain candidates, including domain hacks that use the TLD as part of the word and exact domains across TLDs like .com, .net, and .org.
+description: Use when you need an unopinionated domain-search tool that can generate candidates, let you filter them externally, and then check availability with registrar and pricing metadata.
 ---
 
 # Domain Search
 
-Use this skill when the user wants domain ideas, availability checks, domain hacks, or exact-TLD scans based on real words.
+Use this skill when the user wants domain ideas, shortlist checking, TLD pricing, or domain hacks and exact-TLD searches based on real words.
 
-## Workflow
+This skill is intentionally tool-like. It does not encode themes, vibes, or semantic filtering. The usual pattern is:
 
-1. Decide whether the request is a `hack`, `exact`, or `check` task.
-2. Ask for or infer the target TLDs.
-3. Run the packaged CLI from the same checkout as this skill:
+1. generate a ranked candidate set
+2. filter externally based on the user's nuance
+3. check the shortlist
+
+## Launcher
+
+Use the bundled launcher script so the CLI can be found even if this skill directory is symlinked elsewhere.
+
+Claude Code:
 
 ```bash
-node bin/domain-search.js hack --tlds st,re,se,it --limit 20
-node bin/domain-search.js exact --tlds com,net,org --limit 20
-node bin/domain-search.js check chemi.st example.com
+${CLAUDE_SKILL_DIR}/scripts/domain-search.sh generate --mode hack --words-file ./words.txt --limit 100
 ```
 
-If you are already in the `skill/` directory of the cloned repo, the same commands can be run as `node ../bin/domain-search.js ...`.
+Generic local invocation:
 
-4. Prefer `--format json` if you need to post-process or rank results.
-5. For faster local-only scans, set `DOMAIN_SEARCH_DISABLE_DEFINITIONS=1`.
+```bash
+./skill/scripts/domain-search.sh generate --mode hack --words-file ./words.txt --limit 100
+```
+
+## Recommended Workflow
+
+Generate candidates:
+
+```bash
+./skill/scripts/domain-search.sh generate --mode hack --tlds st,re,se,it --words-file ./words.txt --limit 200
+```
+
+Filter externally however you want, then check:
+
+```bash
+./skill/scripts/domain-search.sh check --input shortlist.json --limit 20 --progress-format human
+```
+
+Use one-shot search only when you do not need an intermediate filtering step:
+
+```bash
+./skill/scripts/domain-search.sh search --mode exact --tlds com,net,org --words-file ./words.txt --limit 20 --progress-format human
+```
+
+Inspect bundled pricing:
+
+```bash
+./skill/scripts/domain-search.sh prices --max-price 20
+```
 
 ## Notes
 
-- `hack` mode splits the word into label plus TLD.
-- `exact` mode checks the full word against each requested TLD.
-- The bundled fallback wordlist can be overridden with `--words-file`.
-- Availability relies on `whois`, and registry behavior varies by TLD.
+- `generate` never performs WHOIS or definition lookups.
+- `check` accepts candidate JSON from `--input <path>` or `--input -`.
+- `search` is a convenience wrapper around `generate` plus `check`.
+- Use `--with-definitions` only on final result sets.
+- Use `--show-unknown` when registry ambiguity matters.
+- Bundled price data is dated and advisory; the tool should state that it may now be out of date.

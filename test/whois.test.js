@@ -3,6 +3,7 @@ const assert = require("node:assert/strict");
 const {
   checkDomain,
   classifyWhois,
+  getDomainTld,
 } = require("../lib/whois");
 
 test("classifyWhois detects available, registered, and unknown responses", () => {
@@ -24,4 +25,8 @@ test("checkDomain routes .net through the verisign host override", async () => {
   assert.equal(invocation.command, "whois");
   assert.deepEqual(invocation.args, ["-h", "whois.verisign-grs.com", "example.net"]);
   assert.equal(result.status, "AVAILABLE");
+});
+
+test("getDomainTld returns the final label of a domain", () => {
+  assert.equal(getDomainTld("example.com"), "com");
 });

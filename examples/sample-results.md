@@ -1,11 +1,9 @@
-# Available Domain Hacks
+# Available Exact-TLD Domains
 
-Scanned 4 candidates from 12 generated across .st, .it.
+Checked 5 candidates from 8 across .com, .net. Found 5 available and 0 unknown.
 
-## C
-
-- `chemi.st` from [chemist](https://en.wiktionary.org/wiki/chemist): A scientist or expert in chemistry.
+> Bundled TLD prices were updated as of 2026-03-29 and may now be out of date.
 
 ## S
 
-- `sunshi.ne` from [sunshine](https://en.wiktionary.org/wiki/sunshine): The light and heat of the sun.
+- `sunrise.com` from [sunrise](https://en.wiktionary.org/wiki/sunrise): Definition unavailable. Renewal: $18.48/year. Register via [Namecheap](https://www.namecheap.com/domains/registration/results/?domain=sunrise.com).

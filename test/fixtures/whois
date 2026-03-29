@@ -1,3 +1,17 @@
 #!/bin/sh
 
-printf '%s\n' 'No match for domain'
+for arg in "$@"; do
+  domain="$arg"
+done
+
+case "$domain" in
+  *unknown*)
+    printf '%s\n' 'mystery registry response'
+    ;;
+  *example.com|*taken.com)
+    printf 'Domain Name: %s\n' "$domain"
+    ;;
+  *)
+    printf '%s\n' 'No match for domain'
+    ;;
+esac
