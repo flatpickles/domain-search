@@ -95,6 +95,8 @@ test("formatResults groups mixed-mode results by domain shape", () => {
     candidatePool: 2,
     available: 2,
     unknown: 0,
+    selection_policy: "soft_shape_balance",
+    selected_counts: { exact: 1, creative_suffix: 1 },
     results: [
       {
         word: "sunrise",
@@ -115,6 +117,7 @@ test("formatResults groups mixed-mode results by domain shape", () => {
 
   assert.match(output, /Best \.com \/ Exact Hits/);
   assert.match(output, /Best Creative Suffix \/ Domain Hack Hits/);
+  assert.match(output, /Selected with soft shape balance: 1 exact and 1 creative suffix results/);
 });
 
 test("formatResults separates unknown results needing registrar verification", () => {

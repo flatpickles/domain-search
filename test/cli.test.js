@@ -144,6 +144,7 @@ test("check expands bare inputs with the mixed default when mode and tlds are om
   const output = runCli([
     "check",
     "chemist",
+    "appraise",
     "--show-unknown",
     "--progress-format",
     "silent",
@@ -153,6 +154,8 @@ test("check expands bare inputs with the mixed default when mode and tlds are om
   assert.equal(parsed.kind, "check");
   assert.ok(parsed.results.some((item) => item.domain === "chemist.com"));
   assert.ok(parsed.results.some((item) => item.domain === "chemi.st"));
+  assert.ok(parsed.results.some((item) => item.domain_shape === "exact"));
+  assert.ok(parsed.results.some((item) => item.domain_shape === "creative_suffix"));
 });
 
 test("prices filters bundled metadata by max price", () => {

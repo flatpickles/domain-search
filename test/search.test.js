@@ -56,6 +56,27 @@ test("checkCandidates preserves metadata and can include unknown results", async
   assert.ok(summary.results[0].registration_url);
 });
 
+test("checkCandidates applies soft shape balance to mixed-shape inputs when limit is set", async () => {
+  const summary = await checkCandidates({
+    candidates: [
+      { mode: "exact", domain: "alpha.com", label: "alpha", domain_shape: "exact", source_type: "provided", candidate_type: "brandable", score: 99 },
+      { mode: "exact", domain: "beta.com", label: "beta", domain_shape: "exact", source_type: "provided", candidate_type: "brandable", score: 98 },
+      { mode: "exact", domain: "gamma.com", label: "gamma", domain_shape: "exact", source_type: "provided", candidate_type: "brandable", score: 97 },
+      { mode: "hack", domain: "alph.ae", label: "alph", tld: "ae", domain_shape: "creative_suffix", source_type: "provided", candidate_type: "brandable", score: 70 },
+      { mode: "hack", domain: "bet.ae", label: "bet", tld: "ae", domain_shape: "creative_suffix", source_type: "provided", candidate_type: "brandable", score: 69 },
+      { mode: "hack", domain: "gamm.ae", label: "gamm", tld: "ae", domain_shape: "creative_suffix", source_type: "provided", candidate_type: "brandable", score: 68 },
+    ],
+    limit: 4,
+    progressFormat: "silent",
+    checkDomainFn: async () => ({ status: "AVAILABLE" }),
+  });
+
+  assert.equal(summary.selection_policy, "soft_shape_balance");
+  assert.equal(summary.results.length, 4);
+  assert.ok(summary.selected_counts.exact >= 1);
+  assert.ok(summary.selected_counts.creative_suffix >= 1);
+});
+
 test("checkCandidates preserves provided brandable descriptions", async () => {
   const summary = await checkCandidates({
     candidates: [
@@ -83,6 +104,21 @@ test("checkCandidates preserves provided brandable descriptions", async () => {
   assert.equal(summary.results[0].description, "Short, upbeat dog-walking brand.");
   assert.equal(summary.results[0].description_source, "agent");
   assert.equal(summary.results[0].verification_status, "available");
+});
+
+test("checkCandidates stays score-only for single-shape inputs", async () => {
+  const summary = await checkCandidates({
+    candidates: [
+      { mode: "exact", domain: "alpha.com", label: "alpha", domain_shape: "exact", source_type: "provided", candidate_type: "brandable", score: 99 },
+      { mode: "exact", domain: "beta.com", label: "beta", domain_shape: "exact", source_type: "provided", candidate_type: "brandable", score: 98 },
+    ],
+    limit: 1,
+    progressFormat: "silent",
+    checkDomainFn: async () => ({ status: "AVAILABLE" }),
+  });
+
+  assert.equal(summary.selection_policy, "score_only");
+  assert.equal(summary.selected_counts.creative_suffix, 0);
 });
 
 test("checkCandidates leaves registration link fields null for unknown TLDs", async () => {
@@ -129,8 +165,8 @@ test("searchDomains combines generate and check phases", async () => {
 
 test("searchDomains uses mixed mode by default", async () => {
   const summary = await searchDomains({
-    words: ["sunrise", "chemist"],
-    limit: 2,
+    words: ["sunrise", "chemist", "appraise", "walkin"],
+    limit: 4,
     progressFormat: "silent",
     checkDomainFn: async (domain) => ({
       domain,
@@ -140,8 +176,27 @@ test("searchDomains uses mixed mode by default", async () => {
 
   assert.equal(summary.kind, "search");
   assert.equal(summary.mode, "mixed");
+  assert.equal(summary.selection_policy, "soft_shape_balance");
   assert.ok(summary.results.some((candidate) => candidate.domain_shape === "exact"));
   assert.ok(summary.results.some((candidate) => candidate.domain_shape === "creative_suffix"));
+  assert.ok(summary.selected_counts.exact >= 1);
+  assert.ok(summary.selected_counts.creative_suffix >= 1);
+});
+
+test("searchDomains stays score-only in explicit exact mode", async () => {
+  const summary = await searchDomains({
+    mode: "exact",
+    words: ["sunrise", "sunset"],
+    limit: 1,
+    progressFormat: "silent",
+    checkDomainFn: async (domain) => ({
+      domain,
+      status: "AVAILABLE",
+    }),
+  });
+
+  assert.equal(summary.mode, "exact");
+  assert.equal(summary.selection_policy, "score_only");
 });
 
 test("getTldPricing can return explicit unknown TLD placeholders", () => {

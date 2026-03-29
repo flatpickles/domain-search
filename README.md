@@ -37,6 +37,8 @@ If you do not specify `--mode` or `--tlds`, `generate` and `search` default to a
 - traditional `.com` domains
 - a curated set of creative suffix domains, sometimes called domain hacks
 
+For open-ended discovery requests, `search` is the standard path. `check` is for verifying a pre-existing shortlist.
+
 Real-word workflow:
 
 ```bash
@@ -45,13 +47,7 @@ node bin/domain-search.js generate \
   --limit 100
 ```
 
-Then filter externally and check:
-
-```bash
-node bin/domain-search.js generate --words-file ./words.txt \
-  | jq '.candidates[:20]' \
-  | node bin/domain-search.js check --input - --progress-format human
-```
+Then, if you want an intermediate filtering step, generate candidates first and pass a curated shortlist back into `check`.
 
 Creative suffix domains only:
 
@@ -90,6 +86,8 @@ Structured shortlist contract:
 
 Copyable example: [`skill/examples/brandable-shortlist.json`](./skill/examples/brandable-shortlist.json)
 
+For ordinary “find me the best 20 domains” use cases, prefer `search --limit 20` instead of building temp JSON files and trimming with external `jq`.
+
 Plain text domain list workflow:
 
 ```bash
@@ -110,6 +108,8 @@ node bin/domain-search.js search \
   --limit 20 \
   --progress-format human
 ```
+
+When mixed mode is active and `--limit` is set, the tool applies soft balancing to preserve some traditional `.com` and some creative suffix results when both are available.
 
 Bundled pricing:
 

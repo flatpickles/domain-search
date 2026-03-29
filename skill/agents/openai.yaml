@@ -1,7 +1,7 @@
 interface:
   display_name: "Domain Search"
   short_description: "Generate and check real-word or brandable domains"
-  default_prompt: "Use $domain-search via its launcher directly. Default to a mixed search of traditional .com plus creative suffix domains unless the user asks for a specific domain style."
+  default_prompt: "Use $domain-search via its launcher directly. For open-ended domain discovery, start with search and let the built-in mixed-result trimming return a balanced shortlist of traditional .com and creative suffix domains unless the user asks for a specific style."
 
 policy:
   allow_implicit_invocation: true

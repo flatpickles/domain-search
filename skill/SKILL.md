@@ -14,9 +14,9 @@ This skill is intentionally tool-like. It does not encode themes, vibes, or sema
 
 The usual patterns are:
 
-1. generate a ranked candidate set from words
-2. filter externally based on the user's nuance
-3. check the shortlist
+1. use `search` when the user wants fresh domain ideas
+2. use `generate` only when you explicitly want an intermediate filtering step
+3. use `check` only when you already have a deliberate shortlist
 
 Or:
 
@@ -41,7 +41,13 @@ Generic local invocation:
 
 ## Recommended Workflows
 
-Wordlist-driven generation:
+Open-ended discovery:
+
+```bash
+./skill/scripts/domain-search.sh search --words-file ./words.txt --limit 20 --progress-format human
+```
+
+Wordlist-driven generation when you want an intermediate filter step:
 
 ```bash
 ./skill/scripts/domain-search.sh generate --words-file ./words.txt --limit 200
@@ -106,7 +112,11 @@ Unknown-result fallback:
 ## Notes
 
 - `generate` is for wordlist-derived candidates, not a requirement for all workflows.
+- For “find me domains” requests, start with `search`, not a hand-built shortlist.
+- Do not start with ad hoc shortlist JSON for open-ended discovery requests.
+- Do not use external `jq` trimming/ranking unless the user explicitly wants custom post-processing.
 - Without `--mode` or `--tlds`, the default is a mixed search: `.com` plus a curated creative suffix set.
+- With `--limit`, mixed-mode `search` and mixed-shape `check` apply built-in soft balancing so the final shortlist keeps some traditional and some creative results when both are available.
 - Use `--mode exact` for traditional `.com` domains only.
 - Use `--mode hack` for creative suffix domains only. "Domain hack" is secondary jargon; do not require the user to say it.
 - `check` accepts candidate JSON from `--input <path>` or `--input -`.
