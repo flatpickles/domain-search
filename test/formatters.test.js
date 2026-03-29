@@ -18,7 +18,7 @@ test("formatResults emits markdown for generated candidates", () => {
     ],
   });
 
-  assert.match(output, /# Generated Domain Hack Candidates/);
+  assert.match(output, /# Generated Creative Suffix Candidates/);
   assert.match(output, /chemi\.st/);
 });
 
@@ -84,6 +84,37 @@ test("formatResults groups mixed real-word and brandable results", () => {
   assert.match(output, /Best Real-Word \/ Natural Hits/);
   assert.match(output, /Best Brandable \/ Coined Hits/);
   assert.match(output, /Friendly dog-walking brand/);
+});
+
+test("formatResults groups mixed-mode results by domain shape", () => {
+  const output = formatResults({
+    kind: "check",
+    mode: "mixed",
+    tlds: ["com", "st"],
+    checked: 2,
+    candidatePool: 2,
+    available: 2,
+    unknown: 0,
+    results: [
+      {
+        word: "sunrise",
+        input: "sunrise",
+        domain: "sunrise.com",
+        domain_shape: "exact",
+        candidate_type: "real_word",
+      },
+      {
+        word: "chemist",
+        input: "chemist",
+        domain: "chemi.st",
+        domain_shape: "creative_suffix",
+        candidate_type: "real_word",
+      },
+    ],
+  });
+
+  assert.match(output, /Best \.com \/ Exact Hits/);
+  assert.match(output, /Best Creative Suffix \/ Domain Hack Hits/);
 });
 
 test("formatResults separates unknown results needing registrar verification", () => {

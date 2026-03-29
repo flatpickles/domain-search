@@ -32,12 +32,15 @@ The main commands are:
 - `search`: convenience wrapper for `generate` + `check`
 - `prices`: inspect bundled TLD pricing and registrar metadata
 
+If you do not specify `--mode` or `--tlds`, `generate` and `search` default to a mixed strategy:
+
+- traditional `.com` domains
+- a curated set of creative suffix domains, sometimes called domain hacks
+
 Real-word workflow:
 
 ```bash
 node bin/domain-search.js generate \
-  --mode hack \
-  --tlds st,re,se,it \
   --words-file ./words.txt \
   --limit 100
 ```
@@ -45,9 +48,21 @@ node bin/domain-search.js generate \
 Then filter externally and check:
 
 ```bash
-node bin/domain-search.js generate --mode hack --words-file ./words.txt \
+node bin/domain-search.js generate --words-file ./words.txt \
   | jq '.candidates[:20]' \
   | node bin/domain-search.js check --input - --progress-format human
+```
+
+Creative suffix domains only:
+
+```bash
+node bin/domain-search.js search --mode hack --words-file ./words.txt --limit 20
+```
+
+Traditional `.com` only:
+
+```bash
+node bin/domain-search.js search --mode exact --words-file ./words.txt --limit 20
 ```
 
 Brandable shortlist workflow:
@@ -91,8 +106,6 @@ One-shot search:
 
 ```bash
 node bin/domain-search.js search \
-  --mode exact \
-  --tlds com,net,org \
   --words-file ./words.txt \
   --limit 20 \
   --progress-format human
@@ -119,6 +132,8 @@ This is intentional: not every good domain candidate is a dictionary word.
 Bundled TLD pricing is advisory, static, and intentionally dated. The current bundle was updated as of `2026-03-29` from Namecheap's public TLD pricing page and may now be out of date.
 
 The bundle now includes a broader set of hack-friendly and business-relevant TLDs, but coverage is still incomplete. Unknown or unsupported TLDs remain representable in output.
+
+The mixed default uses a curated creative-suffix subset rather than the full creative TLD set. This keeps default searches more usable and less noisy. Use `--mode hack` if you want the broader explicit creative search behavior.
 
 Result objects include:
 

@@ -7,12 +7,9 @@ const {
   checkDomain,
   formatResults,
   generateCandidates,
-  generateExactCandidates,
-  generateHackCandidates,
   getTldPricing,
   searchDomains,
 } = require("..");
-const { normalizeCandidate } = require("../lib/search");
 const { normalizeWords } = require("../lib/words");
 const { normalizeDomain } = require("../lib/whois");
 
@@ -22,13 +19,13 @@ function usage() {
     `Usage: ${script} <generate|check|search|prices> [options]`,
     "",
     "Commands:",
-    "  generate  Generate ranked candidates only",
+    "  generate  Generate ranked traditional .com and creative suffix candidates",
     "  check     Check a shortlist, JSON input, or direct domains/names",
     "  search    Convenience wrapper for generate + check",
     "  prices    Show bundled TLD pricing and registrar metadata",
     "",
     "Shared options:",
-    "  --mode <hack|exact>           Domain-shape mode for generate/search and bare-name checks",
+    "  --mode <hack|exact>           Force creative suffix or traditional exact domains",
     "  --tlds <list>                Comma-separated TLDs",
     "  --limit <n>                  Result limit",
     "  --max-checks <n>             Maximum WHOIS checks",
@@ -56,6 +53,9 @@ function usage() {
     "Legacy aliases:",
     `  ${script} hack ...   => ${script} search --mode hack ...`,
     `  ${script} exact ...  => ${script} search --mode exact ...`,
+    "",
+    "Default behavior:",
+    "  Without --mode or --tlds, generate/search uses a mixed strategy: .com plus a curated creative suffix set.",
   ].join("\n");
 }
 
@@ -182,55 +182,25 @@ function createCandidatesFromArgs(args, flags) {
   if (bareInputs.length === 0) {
     return candidates;
   }
-
-  if ((flags.mode || "exact") === "hack") {
-    const words = normalizeWords(bareInputs, {
-      minWordLength: flags["min-word-length"] ?? 1,
-      maxWordLength: flags["max-word-length"] ?? 64,
-    });
-    return [
-      ...candidates,
-      ...generateHackCandidates(words, {
-        tlds: flags.tlds,
-        minLabelLength: flags["min-label-length"],
-        maxDomainLength: flags["max-domain-length"],
-      }).map((candidate) => ({
-        ...candidate,
-        input: candidate.word,
-        source_type: "provided",
-        candidate_type: "brandable",
-        description: null,
-        description_source: "none",
-      })),
-    ];
-  }
-
-  if (!flags.tlds && explicitDomains.length === 0) {
-    return [
-      ...candidates,
-      ...bareInputs.map((input) =>
-        normalizeCandidate({
-          mode: "exact",
-          input,
-          domain: `${input}.com`,
-          label: input,
-          candidate_type: "brandable",
-          source_type: "provided",
-        }),
-      ),
-    ];
-  }
-
   const words = normalizeWords(bareInputs, {
     minWordLength: flags["min-word-length"] ?? 1,
     maxWordLength: flags["max-word-length"] ?? 64,
   });
+  const generated = generateCandidates({
+    mode: flags.mode,
+    tlds: flags.tlds,
+    words,
+    minWordLength: flags["min-word-length"],
+    maxWordLength: flags["max-word-length"],
+    minLabelLength: flags["min-label-length"],
+    maxDomainLength: flags["max-domain-length"],
+    maxPrice: flags["max-price"],
+    all: Boolean(flags.all),
+  });
 
   return [
     ...candidates,
-    ...generateExactCandidates(words, {
-      tlds: flags.tlds,
-    }).map((candidate) => ({
+    ...generated.candidates.map((candidate) => ({
       ...candidate,
       input: candidate.word,
       source_type: "provided",

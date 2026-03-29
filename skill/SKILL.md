@@ -1,13 +1,18 @@
 ---
 name: domain-search
-description: Use when you need an unopinionated domain-search tool that works for both real-word exploration and provided brandable shortlists, then enriches results with availability, pricing, registrar links, and optional descriptions.
+description: Use when you need an unopinionated domain-search tool for traditional .com domains, creative suffix domains, or provided brandable shortlists, then enrich the results with availability, pricing, registrar links, and optional descriptions.
 ---
 
 # Domain Search
 
-Use this skill when the user wants domain ideas, shortlist checking, TLD pricing, or hack/exact searches for either real words or invented names.
+Use this skill when the user wants domain ideas, shortlist checking, TLD pricing, or either traditional `.com` domains or creative suffix domains for real words or invented names.
 
-This skill is intentionally tool-like. It does not encode themes, vibes, or semantic filtering. The usual patterns are:
+This skill is intentionally tool-like. It does not encode themes, vibes, or semantic filtering. If the user does not specify a TLD or domain style, use the default mixed search path:
+
+- traditional `.com` domains
+- creative suffix domains, sometimes called domain hacks
+
+The usual patterns are:
 
 1. generate a ranked candidate set from words
 2. filter externally based on the user's nuance
@@ -25,13 +30,13 @@ Use the bundled launcher script directly. Do not inspect the repository structur
 Claude Code:
 
 ```bash
-${CLAUDE_SKILL_DIR}/scripts/domain-search.sh generate --mode hack --words-file ./words.txt --limit 100
+${CLAUDE_SKILL_DIR}/scripts/domain-search.sh generate --words-file ./words.txt --limit 100
 ```
 
 Generic local invocation:
 
 ```bash
-./skill/scripts/domain-search.sh generate --mode hack --words-file ./words.txt --limit 100
+./skill/scripts/domain-search.sh generate --words-file ./words.txt --limit 100
 ```
 
 ## Recommended Workflows
@@ -39,7 +44,7 @@ Generic local invocation:
 Wordlist-driven generation:
 
 ```bash
-./skill/scripts/domain-search.sh generate --mode hack --tlds st,re,se,it --words-file ./words.txt --limit 200
+./skill/scripts/domain-search.sh generate --words-file ./words.txt --limit 200
 ```
 
 Filter externally and check:
@@ -82,7 +87,7 @@ printf "walk.in\nromp.in\nleashr.me\n" | ./skill/scripts/domain-search.sh check 
 Use one-shot search only when you do not need an intermediate filtering step:
 
 ```bash
-./skill/scripts/domain-search.sh search --mode exact --tlds com,net,org --words-file ./words.txt --limit 20 --progress-format human
+./skill/scripts/domain-search.sh search --words-file ./words.txt --limit 20 --progress-format human
 ```
 
 Inspect bundled pricing:
@@ -101,6 +106,9 @@ Unknown-result fallback:
 ## Notes
 
 - `generate` is for wordlist-derived candidates, not a requirement for all workflows.
+- Without `--mode` or `--tlds`, the default is a mixed search: `.com` plus a curated creative suffix set.
+- Use `--mode exact` for traditional `.com` domains only.
+- Use `--mode hack` for creative suffix domains only. "Domain hack" is secondary jargon; do not require the user to say it.
 - `check` accepts candidate JSON from `--input <path>` or `--input -`.
 - `check` is the preferred path for coined or agent-crafted shortlists.
 - Use `--with-descriptions` only on final result sets.

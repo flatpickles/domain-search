@@ -42,6 +42,21 @@ test("generate emits candidate JSON without WHOIS status", () => {
   assert.equal(parsed.candidates[0].status, undefined);
 });
 
+test("generate defaults to mixed mode when no mode or tlds are provided", () => {
+  const output = runCli([
+    "generate",
+    "--words-file",
+    fixtureWords,
+    "--limit",
+    "10",
+  ]);
+  const parsed = JSON.parse(output);
+
+  assert.equal(parsed.mode, "mixed");
+  assert.ok(parsed.candidates.some((item) => item.domain_shape === "exact"));
+  assert.ok(parsed.candidates.some((item) => item.domain_shape === "creative_suffix"));
+});
+
 test("check supports JSON handoff from generate output", () => {
   const shellOutput = execFileSync(
     "zsh",
@@ -123,6 +138,21 @@ test("check accepts plain text domain lists from stdin", () => {
     parsed.results.map((item) => item.domain),
     ["walk.in", "leashr.me"],
   );
+});
+
+test("check expands bare inputs with the mixed default when mode and tlds are omitted", () => {
+  const output = runCli([
+    "check",
+    "chemist",
+    "--show-unknown",
+    "--progress-format",
+    "silent",
+  ]);
+  const parsed = JSON.parse(output);
+
+  assert.equal(parsed.kind, "check");
+  assert.ok(parsed.results.some((item) => item.domain === "chemist.com"));
+  assert.ok(parsed.results.some((item) => item.domain === "chemi.st"));
 });
 
 test("prices filters bundled metadata by max price", () => {

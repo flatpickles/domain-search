@@ -14,6 +14,19 @@ test("generateCandidates uses bundled price filters when explicit tlds are absen
   assert.ok(!generated.tlds.includes("io"));
 });
 
+test("generateCandidates defaults to a mixed .com plus creative suffix search", () => {
+  const generated = generateCandidates({
+    words: ["sunrise", "chemist"],
+  });
+
+  assert.equal(generated.mode, "mixed");
+  assert.equal(generated.requested_mode, null);
+  assert.ok(generated.candidates.some((candidate) => candidate.domain === "sunrise.com"));
+  assert.ok(generated.candidates.some((candidate) => candidate.domain === "chemi.st"));
+  assert.ok(generated.candidates.some((candidate) => candidate.domain_shape === "exact"));
+  assert.ok(generated.candidates.some((candidate) => candidate.domain_shape === "creative_suffix"));
+});
+
 test("checkCandidates preserves metadata and can include unknown results", async () => {
   const summary = await checkCandidates({
     candidates: [
@@ -112,6 +125,23 @@ test("searchDomains combines generate and check phases", async () => {
   assert.equal(summary.kind, "search");
   assert.equal(summary.results.length, 1);
   assert.equal(summary.results[0].domain, "sunrise.com");
+});
+
+test("searchDomains uses mixed mode by default", async () => {
+  const summary = await searchDomains({
+    words: ["sunrise", "chemist"],
+    limit: 2,
+    progressFormat: "silent",
+    checkDomainFn: async (domain) => ({
+      domain,
+      status: "AVAILABLE",
+    }),
+  });
+
+  assert.equal(summary.kind, "search");
+  assert.equal(summary.mode, "mixed");
+  assert.ok(summary.results.some((candidate) => candidate.domain_shape === "exact"));
+  assert.ok(summary.results.some((candidate) => candidate.domain_shape === "creative_suffix"));
 });
 
 test("getTldPricing can return explicit unknown TLD placeholders", () => {
