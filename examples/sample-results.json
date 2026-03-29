@@ -22,6 +22,8 @@
       "source_type": "wordlist",
       "candidate_type": "real_word",
       "status": "AVAILABLE",
+      "verification_status": "available",
+      "verification_hint": null,
       "description": null,
       "description_source": "none",
       "description_url": null,

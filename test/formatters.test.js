@@ -85,6 +85,44 @@ test("formatResults groups mixed real-word and brandable results", () => {
   assert.match(output, /Friendly dog-walking brand/);
 });
 
+test("formatResults separates unknown results needing registrar verification", () => {
+  const output = formatResults({
+    kind: "check",
+    mode: "hack",
+    tlds: ["in"],
+    checked: 2,
+    candidatePool: 2,
+    available: 1,
+    unknown: 1,
+    results: [
+      {
+        word: "walk",
+        input: "walk",
+        domain: "walk.in",
+        description: "Direct and memorable service name.",
+        candidate_type: "real_word",
+        verification_status: "available",
+      },
+      {
+        input: "romp",
+        label: "romp",
+        domain: "romp.in",
+        description: "Playful motion.",
+        candidate_type: "brandable",
+        verification_status: "unknown_needs_registrar_check",
+        verification_hint: "WHOIS inconclusive; verify on registrar before recommending purchase.",
+        registration_provider: "Namecheap",
+        registration_url: "https://example.test",
+      },
+    ],
+  });
+
+  assert.match(output, /## Available Results/);
+  assert.match(output, /## Unknown Results Needing Registrar Verification/);
+  assert.match(output, /WHOIS inconclusive; verify on registrar before recommending purchase/);
+  assert.match(output, /Register via \[Namecheap\]/);
+});
+
 test("formatResults emits json when requested", () => {
   const output = formatResults({
     kind: "prices",

@@ -56,10 +56,35 @@ Brandable shortlist workflow:
 cat shortlist.json | node bin/domain-search.js check --input - --progress-format human
 ```
 
+Structured shortlist contract:
+
+```json
+[
+  {
+    "domain": "leashr.me",
+    "label": "leashr",
+    "word": "leashr",
+    "candidate_type": "brandable",
+    "source_type": "provided",
+    "description": "Friendly dog-walking brand.",
+    "description_source": "agent",
+    "score": 31
+  }
+]
+```
+
+Copyable example: [`skill/examples/brandable-shortlist.json`](./skill/examples/brandable-shortlist.json)
+
 Plain text domain list workflow:
 
 ```bash
 printf "walk.in\nromp.in\nleashr.me\n" | node bin/domain-search.js check --input -
+```
+
+Show unknowns on a final shortlist:
+
+```bash
+node bin/domain-search.js check --input shortlist.json --show-unknown --progress-format human
 ```
 
 One-shot search:
@@ -156,10 +181,38 @@ ln -s /path/to/domain-search/skill .claude/skills/domain-search
 
 The packaged launcher script is [`skill/scripts/domain-search.sh`](./skill/scripts/domain-search.sh). It resolves the real repo path, so the skill can invoke the CLI even when `skill/` is symlinked into another tool directory.
 
+When using the skill, call the launcher directly and do not inspect the repository structure unless the launcher fails.
+
 Public references:
 
 - OpenAI's Codex app announcement notes that skills can be checked into a repository and used across the app, CLI, and IDE extension: [Introducing the Codex app](https://openai.com/index/introducing-the-codex-app/).
 - Anthropic's Claude Code docs describe personal and project skill directories and the `SKILL.md` format: [Extend Claude with skills](https://code.claude.com/docs/en/slash-commands).
+
+## Unknown Results
+
+`UNKNOWN` is a real outcome for some TLDs. Treat it as inconclusive, not available.
+
+Recommended fallback ladder:
+
+1. Run `check` first.
+2. If a result is `AVAILABLE`, report it normally.
+3. If a result is `UNKNOWN`, include the registrar link and say WHOIS was inconclusive.
+4. Only if the user needs purchase-ready confirmation, optionally use [$playwright](/Users/matt/.codex/skills/playwright/SKILL.md) to verify the registrar page for those unknown domains.
+
+Do not pull in [$playwright](/Users/matt/.codex/skills/playwright/SKILL.md) for ideation-only requests, exploratory batches, or when the user did not ask for purchase-level confirmation.
+
+Example output shape:
+
+```json
+{
+  "domain": "walk.in",
+  "status": "UNKNOWN",
+  "verification_status": "unknown_needs_registrar_check",
+  "verification_hint": "WHOIS inconclusive; verify on registrar before recommending purchase.",
+  "registration_provider": "Namecheap",
+  "registration_url": "https://www.namecheap.com/domains/registration/results/?domain=walk.in"
+}
+```
 
 ## Tests
 

@@ -2,10 +2,12 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const { execFileSync } = require("node:child_process");
 const path = require("node:path");
+const fs = require("node:fs");
 
 const repoRoot = path.join(__dirname, "..");
 const cliPath = path.join(repoRoot, "bin", "domain-search.js");
 const skillScriptPath = path.join(repoRoot, "skill", "scripts", "domain-search.sh");
+const skillShortlistExample = path.join(repoRoot, "skill", "examples", "brandable-shortlist.json");
 const fixtureWords = path.join(__dirname, "fixtures", "words-small.txt");
 const fakeBinDir = path.join(__dirname, "fixtures");
 
@@ -95,6 +97,8 @@ test("check can surface UNKNOWN results when requested", () => {
 
   assert.equal(parsed.unknown, 1);
   assert.equal(parsed.results[0].status, "UNKNOWN");
+  assert.equal(parsed.results[0].verification_status, "unknown_needs_registrar_check");
+  assert.match(parsed.results[0].verification_hint, /WHOIS inconclusive/);
 });
 
 test("check accepts plain text domain lists from stdin", () => {
@@ -159,4 +163,34 @@ test("skill launcher works from the skill directory", () => {
 
   assert.equal(parsed.kind, "generate");
   assert.equal(parsed.candidates.length, 1);
+});
+
+test("skill shortlist example is valid JSON and works with check --input", () => {
+  const example = JSON.parse(fs.readFileSync(skillShortlistExample, "utf8"));
+  assert.ok(Array.isArray(example));
+  assert.ok(example[0].domain);
+
+  const output = execFileSync(
+    skillScriptPath,
+    [
+      "check",
+      "--input",
+      skillShortlistExample,
+      "--show-unknown",
+      "--progress-format",
+      "silent",
+    ],
+    {
+      cwd: path.join(repoRoot, "skill"),
+      encoding: "utf8",
+      env: {
+        ...process.env,
+        PATH: `${fakeBinDir}:${process.env.PATH}`,
+      },
+    },
+  );
+  const parsed = JSON.parse(output);
+
+  assert.equal(parsed.kind, "check");
+  assert.ok(parsed.results.length >= 1);
 });

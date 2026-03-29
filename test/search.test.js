@@ -33,7 +33,10 @@ test("checkCandidates preserves metadata and can include unknown results", async
   assert.equal(summary.results[0].word, "chemist");
   assert.equal(summary.results[0].candidate_type, "brandable");
   assert.equal(summary.results[0].source_type, "provided");
+  assert.equal(summary.results[0].verification_status, "available");
   assert.equal(summary.results[1].status, "UNKNOWN");
+  assert.equal(summary.results[1].verification_status, "unknown_needs_registrar_check");
+  assert.match(summary.results[1].verification_hint, /WHOIS inconclusive/);
   assert.ok(summary.results[0].registration_url);
 });
 
@@ -63,6 +66,7 @@ test("checkCandidates preserves provided brandable descriptions", async () => {
 
   assert.equal(summary.results[0].description, "Short, upbeat dog-walking brand.");
   assert.equal(summary.results[0].description_source, "agent");
+  assert.equal(summary.results[0].verification_status, "available");
 });
 
 test("searchDomains combines generate and check phases", async () => {

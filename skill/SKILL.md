@@ -20,7 +20,7 @@ Or:
 
 ## Launcher
 
-Use the bundled launcher script so the CLI can be found even if this skill directory is symlinked elsewhere.
+Use the bundled launcher script directly. Do not inspect the repository structure or try to locate the CLI implementation unless the launcher fails.
 
 Claude Code:
 
@@ -54,6 +54,25 @@ Direct brandable shortlist:
 ./skill/scripts/domain-search.sh check --input shortlist.json --progress-format human
 ```
 
+Structured shortlist contract:
+
+```json
+[
+  {
+    "domain": "leashr.me",
+    "label": "leashr",
+    "word": "leashr",
+    "candidate_type": "brandable",
+    "source_type": "provided",
+    "description": "Friendly dog-walking brand.",
+    "description_source": "agent",
+    "score": 31
+  }
+]
+```
+
+Use [`examples/brandable-shortlist.json`](./examples/brandable-shortlist.json) as the copyable template.
+
 Plain text domain list:
 
 ```bash
@@ -72,6 +91,13 @@ Inspect bundled pricing:
 ./skill/scripts/domain-search.sh prices --max-price 20
 ```
 
+Unknown-result fallback:
+
+1. Run `check` first.
+2. If a result is `AVAILABLE`, report it normally.
+3. If a result is `UNKNOWN`, report it as inconclusive and include the registrar link.
+4. Only if the user needs purchase-ready confirmation, optionally hand off those unknown domains to [$playwright](/Users/matt/.codex/skills/playwright/SKILL.md) for registrar-page verification.
+
 ## Notes
 
 - `generate` is for wordlist-derived candidates, not a requirement for all workflows.
@@ -80,3 +106,4 @@ Inspect bundled pricing:
 - Use `--with-descriptions` only on final result sets.
 - Bundled price data is dated and advisory; the tool should say it may now be out of date.
 - When supplying coined names, include your own short `description` if you have one.
+- Do not pull in [$playwright](/Users/matt/.codex/skills/playwright/SKILL.md) for ideation-only requests, large exploratory batches, or when the user did not ask for purchase-level confirmation.

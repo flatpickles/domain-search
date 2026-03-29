@@ -1,0 +1,22 @@
+[
+  {
+    "domain": "leashr.me",
+    "label": "leashr",
+    "word": "leashr",
+    "candidate_type": "brandable",
+    "source_type": "provided",
+    "description": "Friendly dog-walking brand.",
+    "description_source": "agent",
+    "score": 31
+  },
+  {
+    "domain": "walk.in",
+    "label": "walk",
+    "word": "walk",
+    "candidate_type": "real_word",
+    "source_type": "provided",
+    "description": "Direct, memorable service name.",
+    "description_source": "user",
+    "score": 42
+  }
+]
