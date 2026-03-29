@@ -22,6 +22,26 @@ test("formatResults emits markdown for generated candidates", () => {
   assert.match(output, /chemi\.st/);
 });
 
+test("formatResults emits brandable generate headings", () => {
+  const output = formatResults({
+    kind: "generate",
+    mode: "brandable",
+    tlds: ["com"],
+    candidatePool: 4,
+    emitted: 2,
+    candidates: [
+      {
+        word: "saloise",
+        domain: "saloise.com",
+        score: 48,
+      },
+    ],
+  });
+
+  assert.match(output, /# Generated Brandable \.com Candidates/);
+  assert.match(output, /saloise\.com/);
+});
+
 test("formatResults emits markdown for checked results with registrar metadata", () => {
   const output = formatResults({
     kind: "check",
@@ -193,4 +213,31 @@ test("formatResults emits json when requested", () => {
   }, { format: "json" });
   const parsed = JSON.parse(output);
   assert.equal(parsed.items[0].tld, "com");
+});
+
+test("formatResults includes bounded search metadata for search summaries", () => {
+  const output = formatResults({
+    kind: "search",
+    mode: "brandable",
+    tlds: ["com"],
+    checked: 4,
+    candidatePool: 20,
+    available: 3,
+    unknown: 0,
+    search_truncated: true,
+    remaining_candidates: 16,
+    max_checks_applied: 20,
+    results: [
+      {
+        input: "saloise",
+        label: "saloise",
+        domain: "saloise.com",
+        candidate_type: "brandable",
+      },
+    ],
+  });
+
+  assert.match(output, /Search truncated: yes/);
+  assert.match(output, /max search budget of 20/);
+  assert.match(output, /16 ranked candidates remain unchecked/);
 });

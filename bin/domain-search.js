@@ -25,7 +25,7 @@ function usage() {
     "  prices    Show bundled TLD pricing and registrar metadata",
     "",
     "Shared options:",
-    "  --mode <hack|exact>           Force creative suffix or traditional exact domains",
+    "  --mode <hack|exact|brandable> Force creative suffix, traditional exact, or brandable .com domains",
     "  --tlds <list>                Comma-separated TLDs",
     "  --limit <n>                  Result limit",
     "  --max-checks <n>             Maximum WHOIS checks",
@@ -51,11 +51,13 @@ function usage() {
     "  --max-domain-length <n>",
     "",
     "Legacy aliases:",
-    `  ${script} hack ...   => ${script} search --mode hack ...`,
-    `  ${script} exact ...  => ${script} search --mode exact ...`,
+    `  ${script} hack ...       => ${script} search --mode hack ...`,
+    `  ${script} exact ...      => ${script} search --mode exact ...`,
+    `  ${script} brandable ...  => ${script} search --mode brandable ...`,
     "",
     "Default behavior:",
     "  Without --mode or --tlds, generate/search uses a mixed strategy: .com plus a curated creative suffix set.",
+    "  Search now applies bounded progressive checking by default and may return partial results with search_truncated=true.",
   ].join("\n");
 }
 
@@ -225,7 +227,7 @@ async function run() {
   let { command } = parsed;
   const { args, flags } = parsed;
 
-  if (command === "hack" || command === "exact") {
+  if (command === "hack" || command === "exact" || command === "brandable") {
     flags.mode = command;
     command = "search";
   }

@@ -43,3 +43,12 @@ test("README documents mixed-by-default agent usage and .com-only override examp
   assert.match(readme, /Example explicit `\.com`-only search:/);
   assert.match(readme, /node bin\/domain-search\.js search --mode exact --words-file \.\/words\.txt --limit 20 --progress-format human/);
 });
+
+test("README and skill guidance document brandable mode and bounded search", () => {
+  const readme = read(readmePath);
+  const skill = read(skillPath);
+
+  assert.match(readme, /Search now applies bounded progressive checking by default/);
+  assert.match(readme, /`--mode brandable`/);
+  assert.match(skill, /Use `--mode brandable` when the user explicitly wants shorter brandable `\.com` ideas from a supplied source list\./);
+});

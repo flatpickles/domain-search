@@ -1,6 +1,7 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const {
+  generateBrandableCandidates,
   generateHackCandidates,
   generateExactCandidates,
   scoreBrandable,
@@ -42,4 +43,28 @@ test("generic prefixes and awkward clusters are de-boosted", () => {
 test("brandable scoring de-boosts awkward doubled endings", () => {
   assert.ok(scoreBrandable("walkr") > scoreBrandable("walkrr"));
   assert.ok(scoreBrandable("leashly") > scoreBrandable("leashrr"));
+});
+
+test("generateHackCandidates diversifies early results across TLDs", () => {
+  const results = generateHackCandidates(
+    ["salonist", "shearit", "polish", "coifit", "curlit", "brushit"],
+    {
+      tlds: ["st", "it", "sh"],
+      minLabelLength: 3,
+      maxDomainLength: 10,
+    },
+  );
+
+  assert.deepEqual(
+    results.slice(0, 3).map((item) => item.tld),
+    ["st", "sh", "it"],
+  );
+});
+
+test("generateBrandableCandidates builds short .com labels from explicit source words", () => {
+  const results = generateBrandableCandidates(["chicago", "salon", "gloss", "shear"]);
+
+  assert.ok(results.length > 0);
+  assert.ok(results.every((item) => item.tld === "com"));
+  assert.ok(results.every((item) => item.label.length >= 6 && item.label.length <= 10));
 });

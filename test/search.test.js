@@ -199,6 +199,91 @@ test("searchDomains stays score-only in explicit exact mode", async () => {
   assert.equal(summary.selection_policy, "score_only");
 });
 
+test("searchDomains bounds checking before exhausting the candidate pool", async () => {
+  const letters = "abcdefghijklmnopqrstuvwxyz";
+  const words = Array.from({ length: 120 }, (_, index) => (
+    `b${letters[Math.floor(index / 26) % 26]}${letters[index % 26]}nd`
+  ));
+  const summary = await searchDomains({
+    mode: "exact",
+    words,
+    limit: 2,
+    progressFormat: "silent",
+    checkDomainFn: async (domain) => ({
+      domain,
+      status: "AVAILABLE",
+    }),
+  });
+
+  assert.ok(summary.checked < summary.candidatePool);
+  assert.equal(summary.search_truncated, true);
+  assert.equal(summary.remaining_candidates, summary.candidatePool - summary.checked);
+  assert.equal(summary.max_checks_applied, summary.candidatePool);
+});
+
+test("checkCandidates caps repeated creative TLDs when alternatives exist", async () => {
+  const summary = await checkCandidates({
+    mode: "hack",
+    limit: 4,
+    progressFormat: "silent",
+    candidates: [
+      { mode: "hack", domain: "saloni.st", label: "saloni", tld: "st", domain_shape: "creative_suffix", source_type: "provided", candidate_type: "brandable", score: 90 },
+      { mode: "hack", domain: "colo.st", label: "colo", tld: "st", domain_shape: "creative_suffix", source_type: "provided", candidate_type: "brandable", score: 89 },
+      { mode: "hack", domain: "mane.st", label: "mane", tld: "st", domain_shape: "creative_suffix", source_type: "provided", candidate_type: "brandable", score: 88 },
+      { mode: "hack", domain: "poli.sh", label: "poli", tld: "sh", domain_shape: "creative_suffix", source_type: "provided", candidate_type: "brandable", score: 87 },
+      { mode: "hack", domain: "shear.it", label: "shear", tld: "it", domain_shape: "creative_suffix", source_type: "provided", candidate_type: "brandable", score: 86 },
+    ],
+    checkDomainFn: async () => ({ status: "AVAILABLE" }),
+  });
+  const tldCounts = summary.results.reduce((counts, item) => {
+    counts[item.tld] = (counts[item.tld] || 0) + 1;
+    return counts;
+  }, {});
+
+  assert.ok((tldCounts.st || 0) <= 2);
+  assert.ok(summary.results.some((item) => item.tld === "sh"));
+  assert.ok(summary.results.some((item) => item.tld === "it"));
+});
+
+test("generateCandidates rejects brandable mode without explicit input", () => {
+  assert.throws(
+    () => generateCandidates({ mode: "brandable" }),
+    /Brandable mode requires explicit source words/,
+  );
+});
+
+test("generateCandidates rejects oversized brandable source lists", () => {
+  const letters = "abcdefghijklmnopqrstuvwxyz";
+  const words = Array.from({ length: 201 }, (_, index) => (
+    `w${letters[Math.floor(index / 26) % 26]}${letters[index % 26]}d`
+  ));
+
+  assert.throws(
+    () => generateCandidates({ mode: "brandable", words }),
+    /at most 200 explicit source words/,
+  );
+});
+
+test("searchDomains supports explicit brandable mode", async () => {
+  const summary = await searchDomains({
+    mode: "brandable",
+    words: ["chicago", "salon", "gloss", "shear"],
+    limit: 3,
+    progressFormat: "silent",
+    checkDomainFn: async (domain) => ({
+      domain,
+      status: "AVAILABLE",
+    }),
+  });
+
+  assert.equal(summary.mode, "brandable");
+  assert.ok(summary.results.length > 0);
+  assert.ok(summary.results.every((item) => item.tld === "com"));
+  assert.ok(summary.results.every((item) => item.candidate_type === "brandable"));
+  assert.equal(typeof summary.search_truncated, "boolean");
+  assert.equal(typeof summary.max_checks_applied, "number");
+});
+
 test("getTldPricing can return explicit unknown TLD placeholders", () => {
   const pricing = getTldPricing({ tlds: ["madeup"] });
   assert.equal(pricing.items[0].tld, "madeup");

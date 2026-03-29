@@ -37,6 +37,12 @@ If you do not specify `--mode` or `--tlds`, `generate` and `search` default to a
 - traditional `.com` domains
 - a curated set of creative suffix domains, sometimes called domain hacks
 
+Search now applies bounded progressive checking by default. When a `--limit` is present, the tool checks ranked candidates in stages and may stop early once it has enough available results. Search output now includes:
+
+- `search_truncated`
+- `remaining_candidates`
+- `max_checks_applied`
+
 For open-ended discovery requests, `search` is the standard path. `check` is for verifying a pre-existing shortlist.
 
 ## Agent Usage
@@ -77,6 +83,14 @@ Brandable shortlist workflow:
 ```bash
 cat shortlist.json | node bin/domain-search.js check --input - --progress-format human
 ```
+
+Shorter brandable `.com` exploration from an explicit source list:
+
+```bash
+node bin/domain-search.js search --mode brandable --words-file ./words.txt --limit 20 --progress-format human
+```
+
+`--mode brandable` is explicit-only. It does not use the bundled default dictionary, and in v1 it emits `.com` candidates only.
 
 Structured shortlist contract:
 
@@ -119,6 +133,8 @@ node bin/domain-search.js search \
   --limit 20 \
   --progress-format human
 ```
+
+When bounded search stops early, `search_truncated: true` means there are still ranked candidates left unchecked in the generated pool.
 
 When mixed mode is active and `--limit` is set, the tool applies soft balancing to preserve some traditional `.com` and some creative suffix results when both are available.
 
@@ -189,6 +205,7 @@ const {
   checkCandidates,
   searchDomains,
   getTldPricing,
+  generateBrandableCandidates,
   generateHackCandidates,
   generateExactCandidates,
   checkDomain,

@@ -101,6 +101,29 @@ test("search runs generate plus check with exact mode", () => {
   assert.ok(parsed.results.every((item) => ["com", "net"].includes(item.tld)));
 });
 
+test("search supports explicit brandable mode and exposes bounded-search metadata", () => {
+  const output = runCli([
+    "search",
+    "--mode",
+    "brandable",
+    "--words-file",
+    fixtureWords,
+    "--limit",
+    "2",
+    "--progress-format",
+    "silent",
+  ]);
+  const parsed = JSON.parse(output);
+
+  assert.equal(parsed.kind, "search");
+  assert.equal(parsed.mode, "brandable");
+  assert.ok(parsed.results.length > 0);
+  assert.ok(parsed.results.every((item) => item.tld === "com"));
+  assert.equal(typeof parsed.search_truncated, "boolean");
+  assert.equal(typeof parsed.remaining_candidates, "number");
+  assert.equal(typeof parsed.max_checks_applied, "number");
+});
+
 test("check can surface UNKNOWN results when requested", () => {
   const output = runCli([
     "check",

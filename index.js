@@ -1,4 +1,5 @@
 const {
+  generateBrandableCandidates,
   generateHackCandidates,
   generateExactCandidates,
 } = require("./lib/candidates");
@@ -11,6 +12,7 @@ const { checkDomain } = require("./lib/whois");
 module.exports = {
   checkCandidates,
   generateCandidates,
+  generateBrandableCandidates,
   getTldPricing,
   searchDomains,
   generateHackCandidates,
