@@ -39,6 +39,17 @@ If you do not specify `--mode` or `--tlds`, `generate` and `search` default to a
 
 For open-ended discovery requests, `search` is the standard path. `check` is for verifying a pre-existing shortlist.
 
+## Agent Usage
+
+When an agent is using this tool for an open-ended request, the default should stay mixed unless the user explicitly asks for `.com` only, a single TLD, or creative suffix domains only.
+
+When mixed mode is used, the final answer should keep both shapes visible instead of collapsing into a mostly-`.com` list. A good default is two sections:
+
+- traditional exact domains
+- creative suffix domains
+
+This guidance is about how to present results, not a change to the CLI. The CLI default remains mixed, and the built-in soft balancing still applies when mixed mode is active and `--limit` is set.
+
 Real-word workflow:
 
 ```bash
@@ -110,6 +121,26 @@ node bin/domain-search.js search \
 ```
 
 When mixed mode is active and `--limit` is set, the tool applies soft balancing to preserve some traditional `.com` and some creative suffix results when both are available.
+
+Example mixed-mode presentation for an open-ended request:
+
+```md
+Traditional exact domains
+- verdelore.com
+- mosshalo.com
+- leafrune.com
+
+Creative suffix domains
+- leaflore.garden
+- quietgrove.co
+- moonmoss.garden
+```
+
+Example explicit `.com`-only search:
+
+```bash
+node bin/domain-search.js search --mode exact --words-file ./words.txt --limit 20 --progress-format human
+```
 
 Bundled pricing:
 

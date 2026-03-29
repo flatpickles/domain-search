@@ -12,6 +12,8 @@ This skill is intentionally tool-like. It does not encode themes, vibes, or sema
 - traditional `.com` domains
 - creative suffix domains, sometimes called domain hacks
 
+Only override that mixed default when the user explicitly asks for a constraint such as `.com` only, one specific TLD, or creative suffix domains only.
+
 The usual patterns are:
 
 1. use `search` when the user wants fresh domain ideas
@@ -46,6 +48,13 @@ Open-ended discovery:
 ```bash
 ./skill/scripts/domain-search.sh search --words-file ./words.txt --limit 20 --progress-format human
 ```
+
+When you use the default mixed search path, present the final results in two sections:
+
+- traditional exact domains
+- creative suffix domains
+
+If both shapes survive checking, keep both visible in the final answer. Do not rerank a mixed run into a mostly-`.com` final list unless the user explicitly asked for that outcome.
 
 Wordlist-driven generation when you want an intermediate filter step:
 
@@ -117,8 +126,11 @@ Unknown-result fallback:
 - Do not use external `jq` trimming/ranking unless the user explicitly wants custom post-processing.
 - Without `--mode` or `--tlds`, the default is a mixed search: `.com` plus a curated creative suffix set.
 - With `--limit`, mixed-mode `search` and mixed-shape `check` apply built-in soft balancing so the final shortlist keeps some traditional and some creative results when both are available.
+- Only force `--mode exact`, `--tlds`, or `--mode hack` when the user directly specifies that constraint.
 - Use `--mode exact` for traditional `.com` domains only.
 - Use `--mode hack` for creative suffix domains only. "Domain hack" is secondary jargon; do not require the user to say it.
+- For mixed-mode responses, split the output into traditional exact results and creative suffix results instead of blending everything into one list.
+- Do not collapse a mixed run into mostly `.com` picks just because they feel safer or more standard unless the user asked for that preference.
 - `check` accepts candidate JSON from `--input <path>` or `--input -`.
 - `check` is the preferred path for coined or agent-crafted shortlists.
 - Use `--with-descriptions` only on final result sets.
