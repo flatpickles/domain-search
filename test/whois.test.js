@@ -84,6 +84,29 @@ test("checkDomain routes .in through the nixi registry host override", async () 
   assert.equal(result.status, "AVAILABLE");
 });
 
+test("checkDomain routes .se through the registry host override", async () => {
+  let invocation = null;
+
+  const result = await checkDomain("clau.se", {
+    execFileFn: async (command, args) => {
+      invocation = { command, args };
+      return {
+        stdout: `state:            active
+domain:           clau.se
+created:          2013-11-20
+expires:          2026-11-20
+nserver:          ns01.one.com
+status:           ok
+registrar:        One.com`,
+      };
+    },
+  });
+
+  assert.equal(invocation.command, "whois");
+  assert.deepEqual(invocation.args, ["-h", "whois.iis.se", "clau.se"]);
+  assert.equal(result.status, "REGISTERED");
+});
+
 test("checkDomain reduces unknown responses for supported noisy TLDs", async () => {
   const meResult = await checkDomain("brandable.me", {
     execFileFn: async () => ({
