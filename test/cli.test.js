@@ -158,9 +158,10 @@ test("check accepts plain text domain lists from stdin", () => {
   assert.equal(parsed.kind, "check");
   assert.equal(parsed.results.length, 2);
   assert.deepEqual(
-    parsed.results.map((item) => item.domain),
-    ["walk.in", "leashr.me"],
+    new Set(parsed.results.map((item) => item.domain)),
+    new Set(["walk.in", "leashr.me"]),
   );
+  assert.ok(parsed.results.every((item) => item.domain_shape === "creative_suffix"));
 });
 
 test("check expands bare inputs with the mixed default when mode and tlds are omitted", () => {
@@ -205,6 +206,24 @@ test("check uses curated .st registration metadata instead of Namecheap fallback
   assert.equal(parsed.results[0].registration_provider, "ST Registry");
   assert.equal(parsed.results[0].registration_kind, "registry_homepage");
   assert.match(parsed.results[0].registration_url, /nic\.st/);
+});
+
+test("check filters weak provided domains from direct CLI args", () => {
+  const output = runCli([
+    "check",
+    "stageforgeco.com",
+    "walk.in",
+    "setcraf.it",
+    "--progress-format",
+    "silent",
+  ]);
+  const parsed = JSON.parse(output);
+
+  assert.deepEqual(
+    parsed.results.map((item) => item.domain),
+    ["walk.in"],
+  );
+  assert.equal(parsed.results[0].domain_shape, "creative_suffix");
 });
 
 test("skill launcher works from the skill directory", () => {

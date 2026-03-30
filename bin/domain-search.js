@@ -172,7 +172,7 @@ function createCandidatesFromArgs(args, flags) {
   const explicitDomains = args.filter((value) => value.includes("."));
   const bareInputs = args.filter((value) => !explicitDomains.includes(value));
   const candidates = explicitDomains.map((domain) => ({
-    mode: flags.mode || "exact",
+    ...(flags.mode ? { mode: flags.mode } : {}),
     input: domain,
     domain: normalizeDomain(domain),
     source_type: "provided",

@@ -4,6 +4,7 @@ const {
   generateBrandableCandidates,
   generateHackCandidates,
   generateExactCandidates,
+  hasBlockedCorporateTail,
   scoreBrandable,
 } = require("../lib/candidates");
 
@@ -67,4 +68,35 @@ test("generateBrandableCandidates builds short .com labels from explicit source 
   assert.ok(results.length > 0);
   assert.ok(results.every((item) => item.tld === "com"));
   assert.ok(results.every((item) => item.label.length >= 6 && item.label.length <= 10));
+});
+
+test("generateBrandableCandidates excludes corporate filler source words and tails", () => {
+  const results = generateBrandableCandidates(["company", "stage", "scene", "build"]);
+
+  assert.ok(results.length > 0);
+  assert.ok(results.every((item) => !item.source_words.includes("company")));
+  assert.ok(results.every((item) => !hasBlockedCorporateTail(item.label)));
+});
+
+test("generateExactCandidates filters labels ending in corporate filler tails", () => {
+  const results = generateExactCandidates(["stageco", "sunrise"], { tlds: ["com"] });
+
+  assert.ok(!results.some((item) => item.domain === "stageco.com"));
+  assert.ok(results.some((item) => item.domain === "sunrise.com"));
+});
+
+test("generateHackCandidates keeps only readable .it splits", () => {
+  const results = generateHackCandidates(
+    ["shearit", "setcrafit", "brushit", "stagecore"],
+    {
+      tlds: ["it", "re"],
+      minLabelLength: 3,
+      maxDomainLength: 12,
+    },
+  );
+
+  assert.ok(results.some((item) => item.domain === "shear.it"));
+  assert.ok(results.some((item) => item.domain === "brush.it"));
+  assert.ok(!results.some((item) => item.domain === "setcraf.it"));
+  assert.ok(!results.some((item) => item.domain === "stageco.re"));
 });

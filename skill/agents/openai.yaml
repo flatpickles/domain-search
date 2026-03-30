@@ -1,7 +1,7 @@
 interface:
   display_name: "Domain Search"
   short_description: "Generate and check real-word or brandable domains"
-  default_prompt: "Use $domain-search via its launcher directly. For open-ended domain discovery, start with search and keep the built-in mixed default unless the user explicitly asks for .com only, one specific TLD, or creative suffix domains only. When mixed results are used, present the final answer in two sections: traditional exact domains and creative suffix domains, with both represented when available. Use --mode brandable only when the user explicitly wants shorter brandable .com ideas from a supplied source list. Search is bounded by default, so if it stops early, explain search_truncated and remaining_candidates."
+  default_prompt: "Use $domain-search via its launcher directly. For open-ended domain discovery, start with search and keep the built-in mixed default unless the user explicitly asks for .com only, one specific TLD, or creative suffix domains only. When mixed results are used, present the final answer in two sections: traditional exact domains and creative suffix domains, with both represented when available. Use --mode brandable only when the user explicitly wants shorter brandable .com ideas from a supplied source list. Do not force availability with filler endings like co or company, and skip weak .it compounds whose label does not stand on its own as a word. Search is bounded by default, so if it stops early, explain search_truncated and remaining_candidates."
 
 policy:
   allow_implicit_invocation: true

@@ -52,3 +52,13 @@ test("README and skill guidance document brandable mode and bounded search", () 
   assert.match(readme, /`--mode brandable`/);
   assert.match(skill, /Use `--mode brandable` when the user explicitly wants shorter brandable `\.com` ideas from a supplied source list\./);
 });
+
+test("skill and agent guidance forbid filler co/company names and weak .it compounds", () => {
+  const skill = read(skillPath);
+  const prompt = read(agentPromptPath);
+
+  assert.match(skill, /Do not hand-build exploratory shortlist names that just append corporate filler like `co`, `company`, `corp`, `inc`, `llc`, or `ltd`/);
+  assert.match(skill, /Do not introduce weak `\*\.it` compounds manually/);
+  assert.match(prompt, /Do not force availability with filler endings like co or company/);
+  assert.match(prompt, /skip weak \.it compounds whose label does not stand on its own as a word/);
+});

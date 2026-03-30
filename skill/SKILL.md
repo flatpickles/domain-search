@@ -15,6 +15,7 @@ This skill is intentionally tool-like. It does not encode themes, vibes, or sema
 Only override that mixed default when the user explicitly asks for a constraint such as `.com` only, one specific TLD, or creative suffix domains only.
 
 Use `--mode brandable` when the user explicitly wants shorter brandable `.com` ideas from a supplied source list.
+Do not hand-build exploratory shortlist names that just append corporate filler like `co`, `company`, `corp`, `inc`, `llc`, or `ltd` to force availability.
 
 The usual patterns are:
 
@@ -108,6 +109,7 @@ Use one-shot search only when you do not need an intermediate filtering step:
 ```
 
 Search now applies bounded progressive checking by default. When a ranked search stops early, use `search_truncated`, `remaining_candidates`, and `max_checks_applied` in the output to explain that more ranked candidates were available but not checked yet.
+Do not introduce weak `*.it` compounds manually; if the label before `.it` does not read as a standalone word, skip it.
 
 Inspect bundled pricing:
 
@@ -130,6 +132,7 @@ Unknown-result fallback:
 - Do not use external `jq` trimming/ranking unless the user explicitly wants custom post-processing.
 - Without `--mode` or `--tlds`, the default is a mixed search: `.com` plus a curated creative suffix set.
 - Use `--mode brandable` only with explicit source words; it does not fall back to the bundled dictionary and it emits `.com` candidates only in v1.
+- Do not force availability with filler endings like `co` or `company`; prefer broader source words, explicit `--mode brandable`, or a deliberate shortlisted `check` pass.
 - With `--limit`, mixed-mode `search` and mixed-shape `check` apply built-in soft balancing so the final shortlist keeps some traditional and some creative results when both are available.
 - Only force `--mode exact`, `--tlds`, or `--mode hack` when the user directly specifies that constraint.
 - Use `--mode exact` for traditional `.com` domains only.

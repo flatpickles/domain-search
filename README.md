@@ -91,6 +91,7 @@ node bin/domain-search.js search --mode brandable --words-file ./words.txt --lim
 ```
 
 `--mode brandable` is explicit-only. It does not use the bundled default dictionary, and in v1 it emits `.com` candidates only.
+It now hard-filters corporate filler tails such as `co`, `company`, `corp`, `inc`, `llc`, and `ltd` so exploratory runs do not drift into forced `...co.com` names.
 
 Structured shortlist contract:
 
@@ -135,6 +136,7 @@ node bin/domain-search.js search \
 ```
 
 When bounded search stops early, `search_truncated: true` means there are still ranked candidates left unchecked in the generated pool.
+Creative `.it` results are also stricter now: the label before `.it` must stand on its own as a clean word, so weak stems like `setcraf.it` are filtered out.
 
 When mixed mode is active and `--limit` is set, the tool applies soft balancing to preserve some traditional `.com` and some creative suffix results when both are available.
 
