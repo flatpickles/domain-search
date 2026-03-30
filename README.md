@@ -263,11 +263,12 @@ Public references:
 ## Unknown Results
 
 `UNKNOWN` is a real outcome for some TLDs. Treat it as inconclusive, not available.
+Default `check` and `search` output should include only domains confidently classified as `AVAILABLE`.
 
 Recommended fallback ladder:
 
 1. Run `check` first.
-2. If a result is `AVAILABLE`, report it normally.
+2. If a result is `AVAILABLE`, report it as available.
 3. If a result is `UNKNOWN`, include the registrar link and say WHOIS was inconclusive.
 4. Only if the user needs purchase-ready confirmation, optionally use [$playwright](/Users/matt/.codex/skills/playwright/SKILL.md) to verify the registrar page for those unknown domains.
 

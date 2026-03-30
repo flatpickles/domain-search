@@ -56,6 +56,50 @@ test("checkCandidates preserves metadata and can include unknown results", async
   assert.ok(summary.results[0].registration_url);
 });
 
+test("checkCandidates excludes contradictory whois false positives from default results", async () => {
+  const summary = await checkCandidates({
+    candidates: ["walk.in"],
+    progressFormat: "silent",
+    execFileFn: async () => ({
+      stdout: `# whois.nixiregistry.in
+Domain Name: walk.in
+Registry Domain ID: D414400000000620344-IN
+Registrar: Key-Systems GmbH
+Creation Date: 2016-04-07T20:02:30.060Z
+Name Server: ns-cloud-e1.googledomains.com
+Domain Status: clientTransferProhibited https://icann.org/epp#clientTransferProhibited
+
+# whois.rrpproxy.net
+The queried object does not exist:`,
+    }),
+  });
+
+  assert.equal(summary.available, 0);
+  assert.equal(summary.registered, 1);
+  assert.equal(summary.results.length, 0);
+});
+
+test("checkCandidates can surface ambiguous whois output only when unknowns are requested", async () => {
+  const summary = await checkCandidates({
+    candidates: ["mystery.in"],
+    showUnknown: true,
+    progressFormat: "silent",
+    execFileFn: async () => ({
+      stdout: `# whois.nixiregistry.in
+mystery registry response
+
+# whois.example-registrar.test
+The queried object does not exist:`,
+    }),
+  });
+
+  assert.equal(summary.available, 0);
+  assert.equal(summary.unknown, 1);
+  assert.equal(summary.results.length, 1);
+  assert.equal(summary.results[0].status, "UNKNOWN");
+  assert.equal(summary.results[0].verification_status, "unknown_needs_registrar_check");
+});
+
 test("checkCandidates infers creative suffix shape for plain provided domains", async () => {
   const summary = await checkCandidates({
     candidates: ["walk.in", "shear.it", "sunrise.com"],

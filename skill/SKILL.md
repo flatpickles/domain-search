@@ -120,7 +120,7 @@ Inspect bundled pricing:
 Unknown-result fallback:
 
 1. Run `check` first.
-2. If a result is `AVAILABLE`, report it normally.
+2. Only surface results that the tool classifies as `AVAILABLE` in default output.
 3. If a result is `UNKNOWN`, report it as inconclusive and include the registrar link.
 4. Only if the user needs purchase-ready confirmation, optionally hand off those unknown domains to [$playwright](/Users/matt/.codex/skills/playwright/SKILL.md) for registrar-page verification.
 
