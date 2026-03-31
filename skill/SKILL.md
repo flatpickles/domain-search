@@ -25,8 +25,8 @@ The usual patterns are:
 
 Or:
 
-1. create a coined or brandable shortlist externally
-2. pass it directly to `check`
+1. only use an external shortlist when the user already supplied it, or when the user explicitly asked for `.com` brandables from a supplied source list
+2. pass that shortlist directly to `check`
 
 ## Launcher
 
@@ -65,13 +65,13 @@ Wordlist-driven generation when you want an intermediate filter step:
 ./skill/scripts/domain-search.sh generate --words-file ./words.txt --limit 200
 ```
 
-Filter externally and check:
+Filter tool output externally and check:
 
 ```bash
 ./skill/scripts/domain-search.sh check --input shortlist.json --limit 20 --progress-format human
 ```
 
-Direct brandable shortlist:
+Direct provided shortlist:
 
 ```bash
 ./skill/scripts/domain-search.sh check --input shortlist.json --progress-format human
@@ -110,6 +110,8 @@ Use one-shot search only when you do not need an intermediate filtering step:
 
 Search now applies bounded progressive checking by default. When a ranked search stops early, use `search_truncated`, `remaining_candidates`, and `max_checks_applied` in the output to explain that more ranked candidates were available but not checked yet.
 Do not hand-build arbitrary non-`.com` domains and call them hacks.
+When the user did not explicitly ask for a TLD, do not invent non-`.com` exact domains or coined non-`.com` brandables like `steady.st`, `equilia.in`, or `steadia.in`.
+For open-ended unspecified-TLD discovery, use `search` and keep the result space to `.com` exact domains plus true whole-word hacks.
 For hack output, the label plus the TLD must read as a whole word, for example `truck.in` -> `truckin`.
 Reject splits like `trucks.in`, `steady.st`, or `anchor.st` when the join does not read as a real whole-word hack.
 
@@ -131,6 +133,7 @@ Unknown-result fallback:
 - `generate` is for wordlist-derived candidates, not a requirement for all workflows.
 - For “find me domains” requests, start with `search`, not a hand-built shortlist.
 - Do not start with ad hoc shortlist JSON for open-ended discovery requests.
+- For open-ended discovery without an explicit TLD, do not use `check` on agent-crafted non-`.com` ideas; only check tool-generated candidates or a user-provided shortlist.
 - Do not use external `jq` trimming/ranking unless the user explicitly wants custom post-processing.
 - Without `--mode` or `--tlds`, the default is a mixed search: `.com` plus a curated whole-word domain-hack set.
 - Use `--mode brandable` only with explicit source words; it does not fall back to the bundled dictionary and it emits `.com` candidates only in v1.
@@ -142,7 +145,7 @@ Unknown-result fallback:
 - For mixed-mode responses, split the output into traditional exact results and domain hacks instead of blending everything into one list.
 - Do not collapse a mixed run into mostly `.com` picks just because they feel safer or more standard unless the user asked for that preference.
 - `check` accepts candidate JSON from `--input <path>` or `--input -`.
-- `check` is the preferred path for coined or agent-crafted shortlists.
+- `check` is the preferred path for a user-provided shortlist, or for deliberate `.com` brandable shortlists built from explicit source words.
 - Use `--with-descriptions` only on final result sets.
 - Bundled price data is dated and advisory; the tool should say it may now be out of date.
 - Registration links are curated per TLD and may point to either a registrar search page or the official registry.

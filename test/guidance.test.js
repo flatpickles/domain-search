@@ -58,9 +58,13 @@ test("skill and agent guidance forbid filler co/company names and arbitrary fake
   const prompt = read(agentPromptPath);
 
   assert.match(skill, /Do not hand-build exploratory shortlist names that just append corporate filler like `co`, `company`, `corp`, `inc`, `llc`, or `ltd`/);
+  assert.match(skill, /do not invent non-`\.com` exact domains or coined non-`\.com` brandables like `steady\.st`, `equilia\.in`, or `steadia\.in`/i);
+  assert.match(skill, /do not use `check` on agent-crafted non-`\.com` ideas; only check tool-generated candidates or a user-provided shortlist/i);
   assert.match(skill, /the label plus the TLD must read as a whole word, for example `truck\.in` -> `truckin`/);
   assert.match(skill, /Reject splits like `trucks\.in`, `steady\.st`, or `anchor\.st`/);
   assert.match(prompt, /Do not force availability with filler endings like co or company/);
+  assert.match(prompt, /do not invent non-\.\s*com exact domains or coined non-\.\s*com brandables/i);
+  assert.match(prompt, /do not use check on agent-crafted non-\.\s*com ideas/i);
   assert.match(prompt, /the label plus TLD must read as a whole word, for example truck\.in -> truckin/);
-  assert.match(prompt, /trucks\.in or steady\.st should be rejected/);
+  assert.match(prompt, /trucks\.in, steady\.st, or equilia\.in should be rejected/);
 });

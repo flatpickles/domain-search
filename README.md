@@ -65,6 +65,7 @@ node bin/domain-search.js generate \
 ```
 
 Then, if you want an intermediate filtering step, generate candidates first and pass a curated shortlist back into `check`.
+For open-ended discovery without an explicit TLD, that shortlist should come from tool output rather than agent-invented non-`.com` ideas.
 
 Domain hacks only:
 
@@ -137,6 +138,7 @@ node bin/domain-search.js search \
 
 When bounded search stops early, `search_truncated: true` means there are still ranked candidates left unchecked in the generated pool.
 Hack results are also stricter now: the label plus the TLD must read as a whole-word hack. `chemi.st`, `apprai.se`, and `truck.in` are valid shapes; arbitrary suffix domains like `steady.st` or `trucks.in` are not.
+When the user did not explicitly ask for a TLD, do not treat non-`.com` exact domains or coined non-`.com` brandables as part of the default mixed result space.
 
 When mixed mode is active and `--limit` is set, the tool applies soft balancing to preserve some traditional `.com` and some domain hacks when both are available.
 
