@@ -112,8 +112,10 @@ Search now applies bounded progressive checking by default. When a ranked search
 Do not hand-build arbitrary non-`.com` domains and call them hacks.
 When the user did not explicitly ask for a TLD, do not invent non-`.com` exact domains or coined non-`.com` brandables like `steady.st`, `equilia.in`, or `steadia.in`.
 For open-ended unspecified-TLD discovery, use `search` and keep the result space to `.com` exact domains plus true whole-word hacks.
-For hack output, the label plus the TLD must read as a whole word, for example `truck.in` -> `truckin`.
-Reject splits like `trucks.in`, `steady.st`, or `anchor.st` when the join does not read as a real whole-word hack.
+For hack output, the label plus the TLD must read as a single ordinary word, for example `truck.in` -> `truckin`.
+Do not relax this into a phrase, sentence fragment, or multiple-word reading. Reject examples like `tune.me`, `level.ed`, or `driftless.in` when the joined reading is not one real word.
+Reject splits like `trucks.in`, `steady.st`, or `anchor.st` when the join does not read as a real full-word hack.
+If confirmed-available full-word hacks are scarce, return fewer results and say so. Do not pad with short suffix domains, phrase-like hacks, or coined non-`.com` alternatives.
 
 Inspect bundled pricing:
 
@@ -134,6 +136,7 @@ Unknown-result fallback:
 - For “find me domains” requests, start with `search`, not a hand-built shortlist.
 - Do not start with ad hoc shortlist JSON for open-ended discovery requests.
 - For open-ended discovery without an explicit TLD, do not use `check` on agent-crafted non-`.com` ideas; only check tool-generated candidates or a user-provided shortlist.
+- For open-ended discovery without an explicit TLD, if the valid full-word hack pool is thin, say that directly and return a short list rather than filling space with junk.
 - Do not use external `jq` trimming/ranking unless the user explicitly wants custom post-processing.
 - Without `--mode` or `--tlds`, the default is a mixed search: `.com` plus a curated whole-word domain-hack set.
 - Use `--mode brandable` only with explicit source words; it does not fall back to the bundled dictionary and it emits `.com` candidates only in v1.

@@ -53,6 +53,17 @@ test("README and skill guidance document brandable mode and bounded search", () 
   assert.match(skill, /Use `--mode brandable` when the user explicitly wants shorter brandable `\.com` ideas from a supplied source list\./);
 });
 
+test("skill guidance prefers a short clean full-word-hack list over padded junk", () => {
+  const skill = read(skillPath);
+  const prompt = read(agentPromptPath);
+  const readme = read(readmePath);
+
+  assert.match(skill, /If confirmed-available full-word hacks are scarce, return fewer results and say so\./);
+  assert.match(skill, /Do not pad with short suffix domains, phrase-like hacks, or coined non-`\.com` alternatives\./);
+  assert.match(prompt, /If confirmed-available full-word hacks are scarce, say so and return fewer results rather than padding with short suffix domains or coined non-\.\s*com alternatives\./);
+  assert.match(readme, /If the confirmed-available full-word hack pool is thin, return fewer results and say so instead of padding with short suffix domains or coined non-`\.com` alternatives\./);
+});
+
 test("skill and agent guidance forbid filler co/company names and arbitrary fake hacks", () => {
   const skill = read(skillPath);
   const prompt = read(agentPromptPath);
@@ -60,11 +71,15 @@ test("skill and agent guidance forbid filler co/company names and arbitrary fake
   assert.match(skill, /Do not hand-build exploratory shortlist names that just append corporate filler like `co`, `company`, `corp`, `inc`, `llc`, or `ltd`/);
   assert.match(skill, /do not invent non-`\.com` exact domains or coined non-`\.com` brandables like `steady\.st`, `equilia\.in`, or `steadia\.in`/i);
   assert.match(skill, /do not use `check` on agent-crafted non-`\.com` ideas; only check tool-generated candidates or a user-provided shortlist/i);
-  assert.match(skill, /the label plus the TLD must read as a whole word, for example `truck\.in` -> `truckin`/);
+  assert.match(skill, /the label plus the TLD must read as a single ordinary word, for example `truck\.in` -> `truckin`/);
+  assert.match(skill, /Do not relax this into a phrase, sentence fragment, or multiple-word reading/);
+  assert.match(skill, /Reject examples like `tune\.me`, `level\.ed`, or `driftless\.in`/);
   assert.match(skill, /Reject splits like `trucks\.in`, `steady\.st`, or `anchor\.st`/);
+  assert.match(skill, /return fewer results and say so\. Do not pad with short suffix domains, phrase-like hacks, or coined non-`\.com` alternatives/i);
   assert.match(prompt, /Do not force availability with filler endings like co or company/);
   assert.match(prompt, /do not invent non-\.\s*com exact domains or coined non-\.\s*com brandables/i);
   assert.match(prompt, /do not use check on agent-crafted non-\.\s*com ideas/i);
-  assert.match(prompt, /the label plus TLD must read as a whole word, for example truck\.in -> truckin/);
-  assert.match(prompt, /trucks\.in, steady\.st, or equilia\.in should be rejected/);
+  assert.match(prompt, /the joined reading must be a single ordinary word, not a phrase or fragment/i);
+  assert.match(prompt, /tune\.me, leveled\.in, driftless\.in, trucks\.in, steady\.st, or equilia\.in should be rejected/);
+  assert.match(prompt, /return fewer results rather than padding with short suffix domains or coined non-\.\s*com alternatives/i);
 });

@@ -137,8 +137,9 @@ node bin/domain-search.js search \
 ```
 
 When bounded search stops early, `search_truncated: true` means there are still ranked candidates left unchecked in the generated pool.
-Hack results are also stricter now: the label plus the TLD must read as a whole-word hack. `chemi.st`, `apprai.se`, and `truck.in` are valid shapes; arbitrary suffix domains like `steady.st` or `trucks.in` are not.
+Hack results are also stricter now: the label plus the TLD must read as one ordinary word. `chemi.st`, `apprai.se`, and `truck.in` are valid shapes; arbitrary suffix domains like `steady.st` or `trucks.in` are not, and phrase-like joins such as `tune.me` are not part of the default full-word hack set.
 When the user did not explicitly ask for a TLD, do not treat non-`.com` exact domains or coined non-`.com` brandables as part of the default mixed result space.
+If the confirmed-available full-word hack pool is thin, return fewer results and say so instead of padding with short suffix domains or coined non-`.com` alternatives.
 
 When mixed mode is active and `--limit` is set, the tool applies soft balancing to preserve some traditional `.com` and some domain hacks when both are available.
 
