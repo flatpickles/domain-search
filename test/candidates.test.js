@@ -10,9 +10,9 @@ const {
 
 test("generateHackCandidates builds hack domains from requested TLDs", () => {
   const results = generateHackCandidates(
-    ["chemist", "appraise", "plainword"],
+    ["chemist", "appraise", "trucking", "plainword"],
     {
-      tlds: ["se", "st"],
+      tlds: ["se", "st", "in"],
       minLabelLength: 3,
       maxDomainLength: 10,
     },
@@ -20,6 +20,7 @@ test("generateHackCandidates builds hack domains from requested TLDs", () => {
 
   assert.ok(results.some((item) => item.domain === "apprai.se"));
   assert.ok(results.some((item) => item.domain === "chemi.st"));
+  assert.ok(results.some((item) => item.domain === "truck.in"));
 });
 
 test("generateExactCandidates expands words across multiple TLDs", () => {
@@ -48,9 +49,9 @@ test("brandable scoring de-boosts awkward doubled endings", () => {
 
 test("generateHackCandidates diversifies early results across TLDs", () => {
   const results = generateHackCandidates(
-    ["salonist", "shearit", "polish", "coifit", "curlit", "brushit"],
+    ["salonist", "polish", "appraise", "trucking"],
     {
-      tlds: ["st", "it", "sh"],
+      tlds: ["st", "se", "sh", "in"],
       minLabelLength: 3,
       maxDomainLength: 10,
     },
@@ -58,7 +59,7 @@ test("generateHackCandidates diversifies early results across TLDs", () => {
 
   assert.deepEqual(
     results.slice(0, 3).map((item) => item.tld),
-    ["st", "sh", "it"],
+    ["se", "sh", "in"],
   );
 });
 
@@ -85,18 +86,18 @@ test("generateExactCandidates filters labels ending in corporate filler tails", 
   assert.ok(results.some((item) => item.domain === "sunrise.com"));
 });
 
-test("generateHackCandidates keeps only readable .it splits", () => {
+test("generateHackCandidates keeps only whole-word hack joins", () => {
   const results = generateHackCandidates(
-    ["shearit", "setcrafit", "brushit", "stagecore"],
+    ["trucking", "walking", "steadyst", "stagecore"],
     {
-      tlds: ["it", "re"],
+      tlds: ["in", "re", "st"],
       minLabelLength: 3,
       maxDomainLength: 12,
     },
   );
 
-  assert.ok(results.some((item) => item.domain === "shear.it"));
-  assert.ok(results.some((item) => item.domain === "brush.it"));
-  assert.ok(!results.some((item) => item.domain === "setcraf.it"));
+  assert.ok(results.some((item) => item.domain === "truck.in"));
+  assert.ok(results.some((item) => item.domain === "walk.in"));
   assert.ok(!results.some((item) => item.domain === "stageco.re"));
+  assert.ok(!results.some((item) => item.domain === "steady.st"));
 });

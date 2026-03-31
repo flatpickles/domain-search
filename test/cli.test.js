@@ -161,7 +161,9 @@ test("check accepts plain text domain lists from stdin", () => {
     new Set(parsed.results.map((item) => item.domain)),
     new Set(["walk.in", "leashr.me"]),
   );
-  assert.ok(parsed.results.every((item) => item.domain_shape === "creative_suffix"));
+  const byDomain = new Map(parsed.results.map((item) => [item.domain, item]));
+  assert.equal(byDomain.get("walk.in").domain_shape, "creative_suffix");
+  assert.equal(byDomain.get("leashr.me").domain_shape, "exact");
 });
 
 test("check expands bare inputs with the mixed default when mode and tlds are omitted", () => {
@@ -213,7 +215,7 @@ test("check filters weak provided domains from direct CLI args", () => {
     "check",
     "stageforgeco.com",
     "walk.in",
-    "setcraf.it",
+    "steady.st",
     "--progress-format",
     "silent",
   ]);
@@ -221,9 +223,10 @@ test("check filters weak provided domains from direct CLI args", () => {
 
   assert.deepEqual(
     parsed.results.map((item) => item.domain),
-    ["walk.in"],
+    ["steady.st", "walk.in"],
   );
-  assert.equal(parsed.results[0].domain_shape, "creative_suffix");
+  assert.equal(parsed.results[0].domain_shape, "exact");
+  assert.equal(parsed.results[1].domain_shape, "creative_suffix");
 });
 
 test("skill launcher works from the skill directory", () => {

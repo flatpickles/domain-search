@@ -1,18 +1,18 @@
 ---
 name: domain-search
-description: Use when you need an unopinionated domain-search tool for traditional .com domains, creative suffix domains, or provided brandable shortlists, then enrich the results with availability, pricing, registrar links, and optional descriptions.
+description: Use when you need an unopinionated domain-search tool for traditional .com domains, true whole-word domain hacks, or provided brandable shortlists, then enrich the results with availability, pricing, registrar links, and optional descriptions.
 ---
 
 # Domain Search
 
-Use this skill when the user wants domain ideas, shortlist checking, TLD pricing, or either traditional `.com` domains or creative suffix domains for real words or invented names.
+Use this skill when the user wants domain ideas, shortlist checking, TLD pricing, or either traditional `.com` domains or true whole-word domain hacks for real words or invented names.
 
 This skill is intentionally tool-like. It does not encode themes, vibes, or semantic filtering. If the user does not specify a TLD or domain style, use the default mixed search path:
 
 - traditional `.com` domains
-- creative suffix domains, sometimes called domain hacks
+- true whole-word domain hacks, where the label plus the TLD reads as the target word
 
-Only override that mixed default when the user explicitly asks for a constraint such as `.com` only, one specific TLD, or creative suffix domains only.
+Only override that mixed default when the user explicitly asks for a constraint such as `.com` only, one specific TLD, or domain hacks only.
 
 Use `--mode brandable` when the user explicitly wants shorter brandable `.com` ideas from a supplied source list.
 Do not hand-build exploratory shortlist names that just append corporate filler like `co`, `company`, `corp`, `inc`, `llc`, or `ltd` to force availability.
@@ -55,7 +55,7 @@ Open-ended discovery:
 When you use the default mixed search path, present the final results in two sections:
 
 - traditional exact domains
-- creative suffix domains
+- domain hacks
 
 If both shapes survive checking, keep both visible in the final answer. Do not rerank a mixed run into a mostly-`.com` final list unless the user explicitly asked for that outcome.
 
@@ -109,7 +109,9 @@ Use one-shot search only when you do not need an intermediate filtering step:
 ```
 
 Search now applies bounded progressive checking by default. When a ranked search stops early, use `search_truncated`, `remaining_candidates`, and `max_checks_applied` in the output to explain that more ranked candidates were available but not checked yet.
-Do not introduce weak `*.it` compounds manually; if the label before `.it` does not read as a standalone word, skip it.
+Do not hand-build arbitrary non-`.com` domains and call them hacks.
+For hack output, the label plus the TLD must read as a whole word, for example `truck.in` -> `truckin`.
+Reject splits like `trucks.in`, `steady.st`, or `anchor.st` when the join does not read as a real whole-word hack.
 
 Inspect bundled pricing:
 
@@ -130,14 +132,14 @@ Unknown-result fallback:
 - For “find me domains” requests, start with `search`, not a hand-built shortlist.
 - Do not start with ad hoc shortlist JSON for open-ended discovery requests.
 - Do not use external `jq` trimming/ranking unless the user explicitly wants custom post-processing.
-- Without `--mode` or `--tlds`, the default is a mixed search: `.com` plus a curated creative suffix set.
+- Without `--mode` or `--tlds`, the default is a mixed search: `.com` plus a curated whole-word domain-hack set.
 - Use `--mode brandable` only with explicit source words; it does not fall back to the bundled dictionary and it emits `.com` candidates only in v1.
 - Do not force availability with filler endings like `co` or `company`; prefer broader source words, explicit `--mode brandable`, or a deliberate shortlisted `check` pass.
 - With `--limit`, mixed-mode `search` and mixed-shape `check` apply built-in soft balancing so the final shortlist keeps some traditional and some creative results when both are available.
 - Only force `--mode exact`, `--tlds`, or `--mode hack` when the user directly specifies that constraint.
 - Use `--mode exact` for traditional `.com` domains only.
-- Use `--mode hack` for creative suffix domains only. "Domain hack" is secondary jargon; do not require the user to say it.
-- For mixed-mode responses, split the output into traditional exact results and creative suffix results instead of blending everything into one list.
+- Use `--mode hack` for true whole-word domain hacks only. "Domain hack" is secondary jargon; do not require the user to say it.
+- For mixed-mode responses, split the output into traditional exact results and domain hacks instead of blending everything into one list.
 - Do not collapse a mixed run into mostly `.com` picks just because they feel safer or more standard unless the user asked for that preference.
 - `check` accepts candidate JSON from `--input <path>` or `--input -`.
 - `check` is the preferred path for coined or agent-crafted shortlists.

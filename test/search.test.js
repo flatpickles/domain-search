@@ -102,7 +102,7 @@ The queried object does not exist:`,
 
 test("checkCandidates infers creative suffix shape for plain provided domains", async () => {
   const summary = await checkCandidates({
-    candidates: ["walk.in", "shear.it", "sunrise.com"],
+    candidates: ["walk.in", "steady.st", "sunrise.com"],
     progressFormat: "silent",
     checkDomainFn: async () => ({ status: "AVAILABLE" }),
   });
@@ -111,8 +111,8 @@ test("checkCandidates infers creative suffix shape for plain provided domains", 
 
   assert.equal(byDomain.get("walk.in").mode, "hack");
   assert.equal(byDomain.get("walk.in").domain_shape, "creative_suffix");
-  assert.equal(byDomain.get("shear.it").mode, "hack");
-  assert.equal(byDomain.get("shear.it").domain_shape, "creative_suffix");
+  assert.equal(byDomain.get("steady.st").mode, "exact");
+  assert.equal(byDomain.get("steady.st").domain_shape, "exact");
   assert.equal(byDomain.get("sunrise.com").domain_shape, "exact");
 });
 
@@ -186,7 +186,7 @@ test("checkCandidates filters weak provided shortlist entries and re-ranks the r
     candidates: [
       "walk.in",
       "stageforgeco.com",
-      "setcraf.it",
+      "steady.st",
       "sunrise.com",
     ],
     progressFormat: "silent",
@@ -195,8 +195,9 @@ test("checkCandidates filters weak provided shortlist entries and re-ranks the r
 
   assert.deepEqual(
     summary.results.map((item) => item.domain),
-    ["sunrise.com", "walk.in"],
+    ["steady.st", "sunrise.com", "walk.in"],
   );
+  assert.equal(summary.results.find((item) => item.domain === "steady.st").domain_shape, "exact");
 });
 
 test("checkCandidates leaves registration link fields null for unknown TLDs", async () => {
@@ -243,7 +244,7 @@ test("searchDomains combines generate and check phases", async () => {
 
 test("searchDomains uses mixed mode by default", async () => {
   const summary = await searchDomains({
-    words: ["sunrise", "chemist", "appraise", "walkin"],
+    words: ["sunrise", "chemist", "appraise", "trucking"],
     limit: 4,
     progressFormat: "silent",
     checkDomainFn: async (domain) => ({
@@ -362,11 +363,11 @@ test("searchDomains supports explicit brandable mode", async () => {
   assert.equal(typeof summary.max_checks_applied, "number");
 });
 
-test("searchDomains keeps readable .it candidates while dropping weak ones", async () => {
+test("searchDomains keeps whole-word hack candidates while dropping weak ones", async () => {
   const summary = await searchDomains({
     mode: "hack",
-    tlds: ["it"],
-    words: ["shearit", "setcrafit", "brushit"],
+    tlds: ["in", "st"],
+    words: ["trucking", "walking", "steadyst"],
     limit: 5,
     progressFormat: "silent",
     checkDomainFn: async (domain) => ({
@@ -375,9 +376,9 @@ test("searchDomains keeps readable .it candidates while dropping weak ones", asy
     }),
   });
 
-  assert.ok(summary.results.some((item) => item.domain === "shear.it"));
-  assert.ok(summary.results.some((item) => item.domain === "brush.it"));
-  assert.ok(!summary.results.some((item) => item.domain === "setcraf.it"));
+  assert.ok(summary.results.some((item) => item.domain === "truck.in"));
+  assert.ok(summary.results.some((item) => item.domain === "walk.in"));
+  assert.ok(!summary.results.some((item) => item.domain === "steady.st"));
 });
 
 test("getTldPricing can return explicit unknown TLD placeholders", () => {

@@ -35,7 +35,7 @@ The main commands are:
 If you do not specify `--mode` or `--tlds`, `generate` and `search` default to a mixed strategy:
 
 - traditional `.com` domains
-- a curated set of creative suffix domains, sometimes called domain hacks
+- a curated set of whole-word domain hacks
 
 Search now applies bounded progressive checking by default. When a `--limit` is present, the tool checks ranked candidates in stages and may stop early once it has enough available results. Search output now includes:
 
@@ -47,12 +47,12 @@ For open-ended discovery requests, `search` is the standard path. `check` is for
 
 ## Agent Usage
 
-When an agent is using this tool for an open-ended request, the default should stay mixed unless the user explicitly asks for `.com` only, a single TLD, or creative suffix domains only.
+When an agent is using this tool for an open-ended request, the default should stay mixed unless the user explicitly asks for `.com` only, a single TLD, or domain hacks only.
 
 When mixed mode is used, the final answer should keep both shapes visible instead of collapsing into a mostly-`.com` list. A good default is two sections:
 
 - traditional exact domains
-- creative suffix domains
+- domain hacks
 
 This guidance is about how to present results, not a change to the CLI. The CLI default remains mixed, and the built-in soft balancing still applies when mixed mode is active and `--limit` is set.
 
@@ -66,7 +66,7 @@ node bin/domain-search.js generate \
 
 Then, if you want an intermediate filtering step, generate candidates first and pass a curated shortlist back into `check`.
 
-Creative suffix domains only:
+Domain hacks only:
 
 ```bash
 node bin/domain-search.js search --mode hack --words-file ./words.txt --limit 20
@@ -136,9 +136,9 @@ node bin/domain-search.js search \
 ```
 
 When bounded search stops early, `search_truncated: true` means there are still ranked candidates left unchecked in the generated pool.
-Creative `.it` results are also stricter now: the label before `.it` must stand on its own as a clean word, so weak stems like `setcraf.it` are filtered out.
+Hack results are also stricter now: the label plus the TLD must read as a whole-word hack. `chemi.st`, `apprai.se`, and `truck.in` are valid shapes; arbitrary suffix domains like `steady.st` or `trucks.in` are not.
 
-When mixed mode is active and `--limit` is set, the tool applies soft balancing to preserve some traditional `.com` and some creative suffix results when both are available.
+When mixed mode is active and `--limit` is set, the tool applies soft balancing to preserve some traditional `.com` and some domain hacks when both are available.
 
 Example mixed-mode presentation for an open-ended request:
 
@@ -148,10 +148,10 @@ Traditional exact domains
 - mosshalo.com
 - leafrune.com
 
-Creative suffix domains
-- leaflore.garden
-- quietgrove.co
-- moonmoss.garden
+Domain hacks
+- chemi.st
+- apprai.se
+- truck.in
 ```
 
 Example explicit `.com`-only search:
@@ -182,7 +182,7 @@ Bundled TLD pricing is advisory, static, and intentionally dated. The current bu
 
 The bundle now includes a broader set of hack-friendly and business-relevant TLDs, but coverage is still incomplete. Unknown or unsupported TLDs remain representable in output.
 
-The mixed default uses a curated creative-suffix subset rather than the full creative TLD set. This keeps default searches more usable and less noisy. Use `--mode hack` if you want the broader explicit creative search behavior.
+The mixed default uses a curated domain-hack subset rather than the full hack-friendly TLD set. This keeps default searches more usable and less noisy. Use `--mode hack` if you want the broader explicit hack search behavior.
 
 Result objects include:
 
