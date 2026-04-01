@@ -265,7 +265,8 @@ Public references:
 
 ## Unknown Results
 
-`UNKNOWN` is a real outcome for some TLDs. Treat it as inconclusive, not available.
+`UNKNOWN` is a real outcome for some supported TLDs when upstream registry responses are ambiguous or transient.
+TLDs outside the bundled supported set are now rejected up front so they do not leak into results as inconclusive.
 Default `check` and `search` output should include only domains confidently classified as `AVAILABLE`.
 
 Recommended fallback ladder:

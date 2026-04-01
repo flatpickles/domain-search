@@ -122,9 +122,9 @@ test("checkCandidates applies soft shape balance to mixed-shape inputs when limi
       { mode: "exact", domain: "alpha.com", label: "alpha", domain_shape: "exact", source_type: "provided", candidate_type: "brandable", score: 99 },
       { mode: "exact", domain: "beta.com", label: "beta", domain_shape: "exact", source_type: "provided", candidate_type: "brandable", score: 98 },
       { mode: "exact", domain: "gamma.com", label: "gamma", domain_shape: "exact", source_type: "provided", candidate_type: "brandable", score: 97 },
-      { mode: "hack", domain: "alph.ae", label: "alph", tld: "ae", domain_shape: "creative_suffix", source_type: "provided", candidate_type: "brandable", score: 70 },
-      { mode: "hack", domain: "bet.ae", label: "bet", tld: "ae", domain_shape: "creative_suffix", source_type: "provided", candidate_type: "brandable", score: 69 },
-      { mode: "hack", domain: "gamm.ae", label: "gamm", tld: "ae", domain_shape: "creative_suffix", source_type: "provided", candidate_type: "brandable", score: 68 },
+      { mode: "hack", domain: "alph.re", label: "alph", tld: "re", domain_shape: "creative_suffix", source_type: "provided", candidate_type: "brandable", score: 70 },
+      { mode: "hack", domain: "bet.re", label: "bet", tld: "re", domain_shape: "creative_suffix", source_type: "provided", candidate_type: "brandable", score: 69 },
+      { mode: "hack", domain: "gamm.re", label: "gamm", tld: "re", domain_shape: "creative_suffix", source_type: "provided", candidate_type: "brandable", score: 68 },
     ],
     limit: 4,
     progressFormat: "silent",
@@ -200,28 +200,34 @@ test("checkCandidates filters weak provided shortlist entries and re-ranks the r
   assert.equal(summary.results.find((item) => item.domain === "steady.st").domain_shape, "exact");
 });
 
-test("checkCandidates leaves registration link fields null for unknown TLDs", async () => {
-  const summary = await checkCandidates({
-    candidates: [
-      {
-        mode: "exact",
-        input: "example",
-        domain: "example.madeup",
-        label: "example",
-        candidate_type: "brandable",
-        source_type: "provided",
-      },
-    ],
-    progressFormat: "silent",
-    checkDomainFn: async () => ({
-      status: "AVAILABLE",
-    }),
-  });
+test("checkCandidates rejects unsupported TLDs for deterministic verification", async () => {
+  await assert.rejects(
+    () =>
+      checkCandidates({
+        candidates: [
+          {
+            mode: "exact",
+            input: "example",
+            domain: "example.madeup",
+            label: "example",
+            candidate_type: "brandable",
+            source_type: "provided",
+          },
+        ],
+        progressFormat: "silent",
+        checkDomainFn: async () => ({
+          status: "AVAILABLE",
+        }),
+      }),
+    /Unsupported TLDs for deterministic verification in candidate checking: \.madeup\./,
+  );
+});
 
-  assert.equal(summary.results[0].registration_provider, null);
-  assert.equal(summary.results[0].registration_url, null);
-  assert.equal(summary.results[0].registration_kind, null);
-  assert.match(summary.results[0].registration_note, /No reliable bundled registration target/);
+test("generateCandidates rejects unsupported TLDs for deterministic verification", () => {
+  assert.throws(
+    () => generateCandidates({ mode: "hack", tlds: ["ne"], words: ["retune"] }),
+    /Unsupported TLDs for deterministic verification in generation: \.ne\./,
+  );
 });
 
 test("searchDomains combines generate and check phases", async () => {

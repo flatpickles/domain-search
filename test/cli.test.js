@@ -124,20 +124,17 @@ test("search supports explicit brandable mode and exposes bounded-search metadat
   assert.equal(typeof parsed.max_checks_applied, "number");
 });
 
-test("check can surface UNKNOWN results when requested", () => {
-  const output = runCli([
-    "check",
-    "unknown.test",
-    "--show-unknown",
-    "--progress-format",
-    "silent",
-  ]);
-  const parsed = JSON.parse(output);
-
-  assert.equal(parsed.unknown, 1);
-  assert.equal(parsed.results[0].status, "UNKNOWN");
-  assert.equal(parsed.results[0].verification_status, "unknown_needs_registrar_check");
-  assert.match(parsed.results[0].verification_hint, /WHOIS inconclusive/);
+test("check rejects unsupported TLDs for deterministic verification", () => {
+  assert.throws(
+    () =>
+      runCli([
+        "check",
+        "unknown.test",
+        "--progress-format",
+        "silent",
+      ]),
+    /Unsupported TLDs for deterministic verification in candidate checking: \.test\./,
+  );
 });
 
 test("check accepts plain text domain lists from stdin", () => {
