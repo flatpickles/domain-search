@@ -274,9 +274,6 @@ Recommended fallback ladder:
 1. Run `check` first.
 2. If a result is `AVAILABLE`, report it as available.
 3. If a result is `UNKNOWN`, include the registrar link and say WHOIS was inconclusive.
-4. Only if the user needs purchase-ready confirmation, optionally use [$playwright](/Users/matt/.codex/skills/playwright/SKILL.md) to verify the registrar page for those unknown domains.
-
-Do not pull in [$playwright](/Users/matt/.codex/skills/playwright/SKILL.md) for ideation-only requests, exploratory batches, or when the user did not ask for purchase-level confirmation.
 
 Example output shape:
 

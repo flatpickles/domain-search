@@ -129,7 +129,6 @@ Unknown-result fallback:
 2. If the requested TLD is outside the bundled supported set, the tool should reject it up front instead of surfacing an inconclusive result.
 3. Only surface results that the tool classifies as `AVAILABLE` in default output.
 4. If a result is `UNKNOWN`, report it as inconclusive and include the registrar link.
-5. Only if the user needs purchase-ready confirmation, optionally hand off those unknown domains to [$playwright](/Users/matt/.codex/skills/playwright/SKILL.md) for registrar-page verification.
 
 ## Notes
 
@@ -157,4 +156,3 @@ Unknown-result fallback:
 - If no reliable bundled registration target is known, report that the registration link is unavailable rather than guessing.
 - If a requested TLD is outside the bundled supported verification set, fail closed and say the tool cannot deterministically verify it.
 - When supplying coined names, include your own short `description` if you have one.
-- Do not pull in [$playwright](/Users/matt/.codex/skills/playwright/SKILL.md) for ideation-only requests, large exploratory batches, or when the user did not ask for purchase-level confirmation.
