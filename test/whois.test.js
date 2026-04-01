@@ -2,6 +2,7 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const {
   checkDomain,
+  checkDomainViaRdap,
   classifyWhois,
   getDomainTld,
 } = require("../lib/whois");
@@ -52,6 +53,19 @@ mystery registry response
 The queried object does not exist:`;
 
   assert.equal(classifyWhois(raw), "UNKNOWN");
+});
+
+test("classifyWhois ignores root-zone IANA records that do not mention the queried domain", () => {
+  const raw = `% IANA WHOIS server
+% This query returned 1 object
+
+domain:       APP
+status:       ACTIVE
+created:      2015-06-25
+changed:      2025-04-11
+source:       IANA`;
+
+  assert.equal(classifyWhois(raw, { domain: "headway.app" }), "UNKNOWN");
 });
 
 test("checkDomain routes .net through the verisign host override", async () => {
@@ -121,6 +135,79 @@ test("checkDomain reduces unknown responses for supported noisy TLDs", async () 
 
   assert.equal(meResult.status, "AVAILABLE");
   assert.equal(appResult.status, "AVAILABLE");
+});
+
+test("checkDomain uses RDAP fallback when whois only returns root-zone data for .app", async () => {
+  const result = await checkDomain("headway.app", {
+    execFileFn: async () => ({
+      stdout: `% IANA WHOIS server
+domain:       APP
+status:       ACTIVE
+created:      2015-06-25
+source:       IANA`,
+    }),
+    fetchFn: async () => ({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        objectClassName: "domain",
+        ldhName: "headway.app",
+      }),
+    }),
+  });
+
+  assert.equal(result.status, "REGISTERED");
+});
+
+test("checkDomainViaRdap maps not-found responses to available", async () => {
+  const result = await checkDomainViaRdap("open-slot.app", {
+    fetchFn: async () => ({
+      ok: false,
+      status: 404,
+      json: async () => ({
+        errorCode: 404,
+      }),
+    }),
+  });
+
+  assert.equal(result.status, "AVAILABLE");
+});
+
+test("checkDomainViaRdap retries rate-limited responses", async () => {
+  let attempts = 0;
+
+  const result = await checkDomainViaRdap("headway.app", {
+    rdapMinInterval: 0,
+    rdapRetryDelay: 0,
+    fetchFn: async () => {
+      attempts += 1;
+      if (attempts === 1) {
+        return {
+          ok: false,
+          status: 429,
+          headers: {
+            get: () => "0",
+          },
+          json: async () => ({}),
+        };
+      }
+
+      return {
+        ok: true,
+        status: 200,
+        headers: {
+          get: () => null,
+        },
+        json: async () => ({
+          objectClassName: "domain",
+          ldhName: "headway.app",
+        }),
+      };
+    },
+  });
+
+  assert.equal(attempts, 2);
+  assert.equal(result.status, "REGISTERED");
 });
 
 test("getDomainTld returns the final label of a domain", () => {
