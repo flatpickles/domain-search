@@ -1,10 +1,10 @@
-# domain-search
+# Domain Search Skill
 
-`domain-search` is a Node.js CLI for finding and checking domain names. It can generate traditional `.com` ideas, true whole-word domain hacks, and supplied brandable shortlists, then enrich results with WHOIS availability, bundled TLD pricing, registrar links, and optional descriptions.
+`domain-search` is an agent skill for finding and checking domain names. It helps agents generate traditional `.com` ideas, true whole-word domain hacks, and supplied brandable shortlists, then enrich results with availability, bundled pricing, registrar links, and optional descriptions.
 
-The tool is intentionally unopinionated: it helps produce and verify candidates, while taste, theme, and final naming judgment stay with the user.
+The skill is intentionally unopinionated: it provides candidate generation and verification, while the user or agent handles taste, theme, and final naming judgment.
 
-## Install From GitHub
+## Install
 
 Requirements:
 
@@ -12,67 +12,47 @@ Requirements:
 - `whois` available on your `PATH`
 - network access for live WHOIS checks
 
-Install the CLI directly from GitHub:
-
-```bash
-npm install -g github:flatpickles/domain-search
-domain-search --help
-```
-
-Or clone the repo and run it locally:
-
-```bash
-git clone https://github.com/flatpickles/domain-search.git
-cd domain-search
-npm install
-node bin/domain-search.js --help
-```
-
-## Basic Usage
-
-Find available domains from a word list:
-
-```bash
-domain-search search --words-file ./words.txt --limit 20 --progress-format human
-```
-
-Check an existing shortlist:
-
-```bash
-domain-search check --input shortlist.json --progress-format human
-```
-
-Inspect bundled TLD pricing:
-
-```bash
-domain-search prices --max-price 20
-```
-
-## Commands
-
-- `search`: generate candidates and check availability
-- `generate`: generate ranked candidates without WHOIS checks
-- `check`: check a supplied shortlist, JSON file, or plain text domain list
-- `prices`: show bundled TLD pricing and registrar metadata
-
-Without `--mode` or `--tlds`, `search` uses a mixed strategy: traditional `.com` domains plus a curated set of whole-word domain hacks.
-
-## Codex And Claude Skills
-
-The bundled skill lives in [`skill/`](./skill). Clone the repo somewhere stable, then symlink that `skill/` directory into your global skills folder.
-
-Codex:
+Clone directly into a global Codex skills folder:
 
 ```bash
 mkdir -p ~/.codex/skills
-ln -s "$PWD/skill" ~/.codex/skills/domain-search
+git clone https://github.com/flatpickles/domain-search.git ~/.codex/skills/domain-search
 ```
 
-Claude Code:
+Clone directly into a global Claude Code skills folder:
 
 ```bash
 mkdir -p ~/.claude/skills
-ln -s "$PWD/skill" ~/.claude/skills/domain-search
+git clone https://github.com/flatpickles/domain-search.git ~/.claude/skills/domain-search
 ```
 
-The skill uses [`skill/scripts/domain-search.sh`](./skill/scripts/domain-search.sh), which resolves the repo path even when the skill directory is symlinked.
+Or clone somewhere stable and symlink the repo root:
+
+```bash
+git clone https://github.com/flatpickles/domain-search.git /path/to/domain-search
+ln -s /path/to/domain-search ~/.codex/skills/domain-search
+ln -s /path/to/domain-search ~/.claude/skills/domain-search
+```
+
+The skill root is the repository root. `SKILL.md` must be at the top level of the cloned or symlinked directory.
+
+## Use
+
+Ask your agent for domain ideas, shortlist checking, TLD pricing, or `.com`/domain-hack exploration. When no TLD or domain style is specified, the skill keeps the default mixed search path:
+
+- traditional `.com` domains
+- true whole-word domain hacks
+
+Agents should present mixed results in separate traditional exact domain and domain hack groups when both are available.
+
+You can also run the skill launcher directly:
+
+```bash
+./scripts/domain-search.sh search --words-file ./words.txt --limit 20 --progress-format human
+./scripts/domain-search.sh check --input examples/brandable-shortlist.json --progress-format human
+./scripts/domain-search.sh prices --max-price 20
+```
+
+## CLI
+
+The skill is powered by a standalone Node.js CLI in [`cli/`](./cli). See [`cli/README.md`](./cli/README.md) for direct CLI installation and usage.

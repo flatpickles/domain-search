@@ -4,16 +4,17 @@ const { execFileSync } = require("node:child_process");
 const path = require("node:path");
 const fs = require("node:fs");
 
-const repoRoot = path.join(__dirname, "..");
-const cliPath = path.join(repoRoot, "bin", "domain-search.js");
-const skillScriptPath = path.join(repoRoot, "skill", "scripts", "domain-search.sh");
-const skillShortlistExample = path.join(repoRoot, "skill", "examples", "brandable-shortlist.json");
+const cliRoot = path.join(__dirname, "..");
+const skillRoot = path.join(cliRoot, "..");
+const cliPath = path.join(cliRoot, "bin", "domain-search.js");
+const skillScriptPath = path.join(skillRoot, "scripts", "domain-search.sh");
+const skillShortlistExample = path.join(skillRoot, "examples", "brandable-shortlist.json");
 const fixtureWords = path.join(__dirname, "fixtures", "words-small.txt");
 const fakeBinDir = path.join(__dirname, "fixtures");
 
 function runCli(args, options = {}) {
   return execFileSync("node", [cliPath, ...args], {
-    cwd: options.cwd || repoRoot,
+    cwd: options.cwd || cliRoot,
     encoding: "utf8",
     env: {
       ...process.env,
@@ -65,7 +66,7 @@ test("check supports JSON handoff from generate output", () => {
       `export PATH="${fakeBinDir}:$PATH"; node "${cliPath}" generate --mode hack --tlds se,st --words-file "${fixtureWords}" --limit 2 | node "${cliPath}" check --input - --progress-format silent`,
     ],
     {
-      cwd: repoRoot,
+      cwd: cliRoot,
       encoding: "utf8",
       env: process.env,
     },
@@ -145,7 +146,7 @@ test("check accepts plain text domain lists from stdin", () => {
       `export PATH="${fakeBinDir}:$PATH"; printf "walk.in\\nleashr.me\\n" | node "${cliPath}" check --input - --progress-format silent`,
     ],
     {
-      cwd: repoRoot,
+      cwd: cliRoot,
       encoding: "utf8",
       env: process.env,
     },
@@ -226,7 +227,7 @@ test("check filters weak provided domains from direct CLI args", () => {
   assert.equal(parsed.results[1].domain_shape, "creative_suffix");
 });
 
-test("skill launcher works from the skill directory", () => {
+test("skill launcher works from the skill root", () => {
   const output = execFileSync(
     skillScriptPath,
     [
@@ -241,7 +242,7 @@ test("skill launcher works from the skill directory", () => {
       "1",
     ],
     {
-      cwd: path.join(repoRoot, "skill"),
+      cwd: skillRoot,
       encoding: "utf8",
       env: {
         ...process.env,
@@ -271,7 +272,7 @@ test("skill shortlist example is valid JSON and works with check --input", () =>
       "silent",
     ],
     {
-      cwd: path.join(repoRoot, "skill"),
+      cwd: skillRoot,
       encoding: "utf8",
       env: {
         ...process.env,

@@ -3,10 +3,12 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 
-const repoRoot = path.join(__dirname, "..");
-const skillPath = path.join(repoRoot, "skill", "SKILL.md");
-const agentPromptPath = path.join(repoRoot, "skill", "agents", "openai.yaml");
-const readmePath = path.join(repoRoot, "README.md");
+const cliRoot = path.join(__dirname, "..");
+const skillRoot = path.join(cliRoot, "..");
+const skillPath = path.join(skillRoot, "SKILL.md");
+const agentPromptPath = path.join(skillRoot, "agents", "openai.yaml");
+const readmePath = path.join(skillRoot, "README.md");
+const cliReadmePath = path.join(cliRoot, "README.md");
 
 function read(filePath) {
   return fs.readFileSync(filePath, "utf8");
@@ -35,21 +37,26 @@ test("agent prompt describes explicit overrides and split mixed-mode output", ()
   assert.match(prompt, /present the final answer in two sections: traditional exact domains and domain hacks/);
 });
 
-test("README documents mixed-by-default agent usage and .com-only override example", () => {
+test("root README documents skill-first install and mixed-by-default agent usage", () => {
   const readme = read(readmePath);
 
-  assert.match(readme, /the default should stay mixed unless the user explicitly asks for `\.com` only, a single TLD, or domain hacks only\./);
-  assert.match(readme, /A good default is two sections:/);
-  assert.match(readme, /Example explicit `\.com`-only search:/);
-  assert.match(readme, /node bin\/domain-search\.js search --mode exact --words-file \.\/words\.txt --limit 20 --progress-format human/);
+  assert.match(readme, /git clone https:\/\/github\.com\/flatpickles\/domain-search\.git ~\/\.codex\/skills\/domain-search/);
+  assert.match(readme, /git clone https:\/\/github\.com\/flatpickles\/domain-search\.git ~\/\.claude\/skills\/domain-search/);
+  assert.match(readme, /The skill root is the repository root/);
+  assert.match(readme, /the skill keeps the default mixed search path:/);
+  assert.match(readme, /traditional `\.com` domains/);
+  assert.match(readme, /true whole-word domain hacks/);
 });
 
-test("README and skill guidance document brandable mode and bounded search", () => {
-  const readme = read(readmePath);
+test("CLI README and skill guidance document direct CLI use, brandable mode, and bounded search", () => {
+  const cliReadme = read(cliReadmePath);
   const skill = read(skillPath);
 
-  assert.match(readme, /Search now applies bounded progressive checking by default/);
-  assert.match(readme, /`--mode brandable`/);
+  assert.match(cliReadme, /cd cli/);
+  assert.match(cliReadme, /npm install -g \./);
+  assert.match(cliReadme, /domain-search search --mode exact --words-file \.\/words\.txt --limit 20 --progress-format human/);
+  assert.match(cliReadme, /`--mode brandable` uses explicit source words and emits `\.com` candidates only\./);
+  assert.match(skill, /Search now applies bounded progressive checking by default/);
   assert.match(skill, /Use `--mode brandable` when the user explicitly wants shorter brandable `\.com` ideas from a supplied source list\./);
 });
 
@@ -61,7 +68,7 @@ test("skill guidance prefers a short clean full-word-hack list over padded junk"
   assert.match(skill, /If confirmed-available full-word hacks are scarce, return fewer results and say so\./);
   assert.match(skill, /Do not pad with short suffix domains, phrase-like hacks, or coined non-`\.com` alternatives\./);
   assert.match(prompt, /If confirmed-available full-word hacks are scarce, say so and return fewer results rather than padding with short suffix domains or coined non-\.\s*com alternatives\./);
-  assert.match(readme, /If the confirmed-available full-word hack pool is thin, return fewer results and say so instead of padding with short suffix domains or coined non-`\.com` alternatives\./);
+  assert.match(readme, /Agents should present mixed results in separate traditional exact domain and domain hack groups/);
 });
 
 test("skill and agent guidance forbid filler co/company names and arbitrary fake hacks", () => {

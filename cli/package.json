@@ -1,7 +1,7 @@
 {
   "name": "domain-search",
   "version": "0.1.0",
-  "description": "Phase-based domain search for real words and brandables, with pricing metadata and a bundled skill.",
+  "description": "Phase-based domain search CLI for real words and brandables, with pricing and registrar metadata.",
   "type": "commonjs",
   "main": "index.js",
   "bin": {
@@ -13,7 +13,6 @@
   "files": [
     "bin",
     "lib",
-    "skill",
     "data",
     "examples",
     "index.js",
@@ -27,8 +26,7 @@
     "domains",
     "domain-hacks",
     "brandable-domains",
-    "whois",
-    "codex-skill"
+    "whois"
   ],
   "license": "MIT"
 }

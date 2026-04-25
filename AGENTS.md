@@ -3,10 +3,11 @@
 Guidance for future automated updates:
 
 - Commit and push after each self-contained chunk of work so updates are easy to review and recover.
-- Keep `README.md` short, human-oriented, and focused on what the tool does, GitHub-based installation, and basic usage.
-- Keep detailed agent workflow guidance here and in `skill/SKILL.md`, not in the human README.
-- Keep CLI behavior, `README.md`, and `skill/SKILL.md` aligned when commands or defaults change.
-- Run `npm test` after implementation changes.
+- Treat the repository root as the installable Codex/Claude skill root. `SKILL.md` must stay at the top level.
+- Keep `README.md` short, human-oriented, and focused on the agent skill, installation, and basic usage.
+- Keep CLI-specific docs in `cli/README.md`; the CLI implementation is owned by `cli/`.
+- Keep CLI behavior, root skill guidance, `agents/openai.yaml`, and `cli/README.md` aligned when commands or defaults change.
+- Run `npm test` from `cli/` after implementation changes.
 
 Domain-search behavior to preserve:
 
@@ -26,7 +27,7 @@ Domain-search behavior to preserve:
 
 Skill notes:
 
-- The launcher is `skill/scripts/domain-search.sh`.
-- The skill root is `skill/`, not the repository root. User-facing docs should tell people to clone the repo somewhere stable and symlink `skill/` into their global Codex or Claude skills folder.
+- The launcher is `scripts/domain-search.sh`.
+- The launcher resolves the real skill root and runs `cli/bin/domain-search.js`, so it works when the repo root is symlinked into a skills folder.
 - When using the skill, call the launcher directly and inspect repository internals only if the launcher fails.
-- Keep `skill/examples/brandable-shortlist.json` aligned with the structured shortlist contract if that contract changes.
+- Keep `examples/brandable-shortlist.json` aligned with the structured shortlist contract if that contract changes.
