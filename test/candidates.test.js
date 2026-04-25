@@ -101,3 +101,15 @@ test("generateHackCandidates keeps only whole-word hack joins", () => {
   assert.ok(!results.some((item) => item.domain === "stageco.re"));
   assert.ok(!results.some((item) => item.domain === "steady.st"));
 });
+
+test("generateHackCandidates validates whole-word hacks against explicit source words", () => {
+  const results = generateHackCandidates(["novalyst"], {
+    tlds: ["st"],
+    minLabelLength: 3,
+    maxDomainLength: 20,
+    scoreThreshold: -999,
+    sourceWordSet: new Set(["novalyst"]),
+  });
+
+  assert.ok(results.some((item) => item.domain === "novaly.st"));
+});

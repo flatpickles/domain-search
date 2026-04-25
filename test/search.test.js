@@ -1,7 +1,14 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const os = require("node:os");
+const path = require("node:path");
 const { checkCandidates, generateCandidates, searchDomains } = require("../lib/search");
 const { getTldPricing } = require("../lib/pricing");
+
+function wait(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 test("generateCandidates uses bundled price filters when explicit tlds are absent", () => {
   const generated = generateCandidates({
@@ -25,6 +32,21 @@ test("generateCandidates defaults to a mixed .com plus creative suffix search", 
   assert.ok(generated.candidates.some((candidate) => candidate.domain === "chemi.st"));
   assert.ok(generated.candidates.some((candidate) => candidate.domain_shape === "exact"));
   assert.ok(generated.candidates.some((candidate) => candidate.domain_shape === "creative_suffix"));
+});
+
+test("generateCandidates treats an explicit words file as a custom hack dictionary", () => {
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "domain-search-"));
+  const wordsFile = path.join(tempDir, "words.txt");
+  fs.writeFileSync(wordsFile, "novalyst\n");
+
+  const generated = generateCandidates({
+    mode: "hack",
+    tlds: ["st"],
+    wordsFile,
+    maxDomainLength: 20,
+  });
+
+  assert.ok(generated.candidates.some((candidate) => candidate.domain === "novaly.st"));
 });
 
 test("checkCandidates preserves metadata and can include unknown results", async () => {
@@ -304,6 +326,60 @@ test("searchDomains bounds checking before exhausting the candidate pool", async
   assert.equal(summary.search_truncated, true);
   assert.equal(summary.remaining_candidates, summary.candidatePool - summary.checked);
   assert.equal(summary.max_checks_applied, summary.candidatePool);
+});
+
+test("checkCandidates reserves maxChecks before concurrent WHOIS work starts", async () => {
+  let calls = 0;
+  const summary = await checkCandidates({
+    candidates: ["alpha.com", "bravo.com", "charlie.com", "delta.com"],
+    maxChecks: 1,
+    concurrency: 4,
+    progressFormat: "silent",
+    checkDomainFn: async () => {
+      calls += 1;
+      await wait(10);
+      return { status: "AVAILABLE" };
+    },
+  });
+
+  assert.equal(calls, 1);
+  assert.equal(summary.checked, 1);
+  assert.equal(summary.available, 1);
+  assert.equal(summary.results.length, 1);
+});
+
+test("searchDomains does not overschedule the remaining available-result goal", async () => {
+  let calls = 0;
+  const summary = await searchDomains({
+    mode: "exact",
+    words: ["sunrise", "sunset", "chemist", "appraise"],
+    limit: 1,
+    concurrency: 4,
+    progressFormat: "silent",
+    checkDomainFn: async () => {
+      calls += 1;
+      await wait(10);
+      return { status: "AVAILABLE" };
+    },
+  });
+
+  assert.equal(calls, 1);
+  assert.equal(summary.checked, 1);
+  assert.equal(summary.available, 1);
+  assert.equal(summary.results.length, 1);
+});
+
+test("checkCandidates rejects invalid concurrency", async () => {
+  await assert.rejects(
+    () =>
+      checkCandidates({
+        candidates: ["alpha.com"],
+        concurrency: 0,
+        progressFormat: "silent",
+        checkDomainFn: async () => ({ status: "AVAILABLE" }),
+      }),
+    /concurrency must be a positive integer/,
+  );
 });
 
 test("checkCandidates caps repeated creative TLDs when alternatives exist", async () => {

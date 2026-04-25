@@ -179,6 +179,39 @@ test("formatResults separates unknown results needing registrar verification", (
   assert.match(output, /Register via \[Namecheap\]/);
 });
 
+test("formatResults separates registered results from available results", () => {
+  const output = formatResults({
+    kind: "check",
+    mode: "exact",
+    tlds: ["com"],
+    checked: 2,
+    candidatePool: 2,
+    available: 1,
+    unknown: 0,
+    registered: 1,
+    results: [
+      {
+        word: "sunrise",
+        domain: "sunrise.com",
+        candidate_type: "real_word",
+        verification_status: "available",
+      },
+      {
+        word: "taken",
+        domain: "taken.com",
+        candidate_type: "real_word",
+        verification_status: "registered",
+        verification_hint: "Already registered.",
+      },
+    ],
+  });
+
+  assert.match(output, /## Available Results/);
+  assert.match(output, /## Registered Results/);
+  assert.match(output, /Already registered/);
+  assert.ok(output.indexOf("## Registered Results") > output.indexOf("sunrise.com"));
+});
+
 test("formatResults distinguishes registry fallback links", () => {
   const output = formatResults({
     kind: "check",
