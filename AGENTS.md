@@ -22,6 +22,7 @@ Domain-search behavior to preserve:
 - Use `--mode brandable` only with explicit source words. It emits `.com` candidates only and should not force availability with filler endings like `co`, `company`, `corp`, `inc`, `llc`, or `ltd`.
 - Use `--with-descriptions` only on final result sets.
 - Bundled price data is advisory and static; update the dated metadata if pricing is refreshed.
+- Registrar links prefer Cloudflare for TLDs in `cli/data/cloudflare-tlds.txt`, use Namecheap as the default public fallback, and preserve dedicated registry links for TLDs that need them.
 - If no reliable bundled registration target exists, leave the registration link blank instead of guessing.
 - If a requested TLD is outside the delegated IANA root-zone set, fail closed rather than presenting an inconclusive result as available.
 

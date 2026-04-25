@@ -163,7 +163,7 @@ Unknown-result fallback:
 - Bundled price data is dated and advisory; the tool should say it may now be out of date.
 - The verification allowlist is the bundled IANA root-zone TLD snapshot, not the smaller pricing list.
 - WHOIS checks can fall back to IANA RDAP bootstrap data for delegated TLDs that do not have custom local RDAP metadata.
-- Registration links are curated per TLD and may point to either a registrar search page or the official registry.
+- Registration links prefer Cloudflare for TLDs in the bundled Cloudflare Registrar support snapshot, use Namecheap as the default fallback, and preserve dedicated registry links for TLDs that need them.
 - Pricing source and registration source are separate; do not assume price metadata implies registrar support.
 - If no reliable bundled registration target is known, report that the registration link is unavailable rather than guessing.
 - If a requested TLD is outside the delegated IANA root-zone set, fail closed and say the tool cannot verify that TLD.

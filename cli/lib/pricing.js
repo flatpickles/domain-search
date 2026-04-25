@@ -1,8 +1,9 @@
 const tldMetadata = require("../data/tlds.json");
+const { resolveRegistrarMetadata } = require("./registrars");
 const { getRootTlds, normalizeTlds } = require("./tlds");
 
 function buildPriceNote(entry) {
-  if (!entry) {
+  if (!entry || !entry.price_updated_at || !entry.price_source_name) {
     return "No bundled pricing metadata is available for this TLD.";
   }
 
@@ -16,17 +17,14 @@ function createPlaceholderEntry(tld) {
     price_updated_at: null,
     price_source_name: null,
     price_source_url: null,
-    preferred_registration_provider: null,
-    fallback_registration_provider: null,
-    registration_options: [],
-    price_note: buildPriceNote(null),
   };
 }
 
 function withComputedFields(entry) {
+  const registrarMetadata = resolveRegistrarMetadata(entry);
   return {
     ...entry,
-    registration_options: entry.registration_options || [],
+    ...registrarMetadata,
     price_note: buildPriceNote(entry),
   };
 }
@@ -59,7 +57,7 @@ function getTldPricing(options = {}) {
     const byTld = new Map(items.map((entry) => [entry.tld, entry]));
     items = explicitTlds.map((tld) => {
       const entry = byTld.get(tld);
-      return entry || createPlaceholderEntry(tld);
+      return entry || withComputedFields(createPlaceholderEntry(tld));
     });
   } else if (!options.all && maxPrice !== null) {
     items = items.filter((entry) => entry.annual_price_usd !== null && entry.annual_price_usd <= maxPrice);
@@ -124,10 +122,17 @@ function buildRegistrationNote(option) {
 
 function resolveRegistration(entry, domain) {
   const preferredProvider = entry?.preferred_registration_provider || null;
-  const option = entry?.registration_options?.[0] || null;
+  const fallbackProvider = entry?.fallback_registration_provider || null;
+  const options = entry?.registration_options || [];
+  const option = options[0] || null;
+  const fallbackOption =
+    options.find((item) => item.provider === fallbackProvider && item.provider !== option?.provider) ||
+    options.find((item) => item.provider !== option?.provider) ||
+    null;
 
   return {
     preferred_registration_provider: preferredProvider,
+    fallback_registration_provider: fallbackProvider,
     registration_provider: option?.provider || null,
     registration_url: renderRegistrationUrl(option, domain),
     registration_kind: option?.kind || null,
@@ -135,11 +140,17 @@ function resolveRegistration(entry, domain) {
     registration_source_url: option?.source_url || null,
     registration_verified_at: option?.verified_at || null,
     registration_note: buildRegistrationNote(option),
+    fallback_registration_url: renderRegistrationUrl(fallbackOption, domain),
+    fallback_registration_kind: fallbackOption?.kind || null,
+    fallback_registration_source: fallbackOption?.source_name || null,
+    fallback_registration_source_url: fallbackOption?.source_url || null,
+    fallback_registration_verified_at: fallbackOption?.verified_at || null,
   };
 }
 
 function enrichWithPricing(candidate) {
-  const entry = getAllTldPricing().find((item) => item.tld === candidate.tld);
+  const entry = getAllTldPricing().find((item) => item.tld === candidate.tld) ||
+    withComputedFields(createPlaceholderEntry(candidate.tld));
   const registration = resolveRegistration(entry, candidate.domain);
 
   return {

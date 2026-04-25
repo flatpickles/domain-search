@@ -278,8 +278,11 @@ test("checkCandidates supports delegated root-zone TLDs without bundled pricing"
 
   assert.equal(summary.results[0].domain, "sunrise.academy");
   assert.equal(summary.results[0].price, null);
-  assert.equal(summary.results[0].registration_url, null);
-  assert.match(summary.results[0].registration_note, /No reliable bundled registration target/);
+  assert.equal(summary.results[0].registration_provider, "Cloudflare");
+  assert.equal(summary.results[0].registration_kind, "registrar_homepage");
+  assert.equal(summary.results[0].fallback_registration_provider, "Namecheap");
+  assert.match(summary.results[0].fallback_registration_url, /namecheap\.com/);
+  assert.match(summary.results[0].registration_url, /domains\.cloudflare\.com/);
 });
 
 test("checkCandidates normalizes IDN TLDs to root-zone A-labels", async () => {
@@ -520,7 +523,29 @@ test("getTldPricing all mode includes delegated root-zone TLDs without pricing",
 
   assert.ok(byTld.has("academy"));
   assert.equal(byTld.get("academy").annual_price_usd, null);
+  assert.equal(byTld.get("academy").registration_options[0].provider, "Cloudflare");
   assert.ok(byTld.has("com"));
+});
+
+test("Cloudflare-supported TLDs prefer Cloudflare with Namecheap fallback", () => {
+  const pricing = getTldPricing({ tlds: ["com"] });
+  const item = pricing.items[0];
+
+  assert.equal(item.preferred_registration_provider, "Cloudflare");
+  assert.equal(item.fallback_registration_provider, "Namecheap");
+  assert.deepEqual(
+    item.registration_options.map((option) => option.provider),
+    ["Cloudflare", "Namecheap"],
+  );
+});
+
+test("non-Cloudflare root-zone TLDs fall back to Namecheap", () => {
+  const pricing = getTldPricing({ tlds: ["de"] });
+  const item = pricing.items[0];
+
+  assert.equal(item.preferred_registration_provider, "Namecheap");
+  assert.equal(item.registration_options[0].provider, "Namecheap");
+  assert.equal(item.registration_options[0].kind, "registrar_search");
 });
 
 test("getTldPricing exposes broader hack-friendly price coverage under a max price", () => {
@@ -534,9 +559,21 @@ test("getTldPricing exposes broader hack-friendly price coverage under a max pri
 
 test(".st uses a curated non-Namecheap registration target", () => {
   const pricing = getTldPricing({ tlds: ["st"] });
+  const item = pricing.items[0];
   const option = pricing.items[0].registration_options[0];
 
+  assert.equal(item.preferred_registration_provider, "ST Registry");
+  assert.equal(item.fallback_registration_provider, null);
   assert.equal(option.provider, "ST Registry");
   assert.equal(option.kind, "registry_homepage");
   assert.match(option.url, /nic\.st/);
+});
+
+test("Cloudflare support overrides generic registry homepage metadata", () => {
+  const pricing = getTldPricing({ tlds: ["sh"] });
+  const item = pricing.items[0];
+
+  assert.equal(item.preferred_registration_provider, "Cloudflare");
+  assert.equal(item.registration_options[0].provider, "Cloudflare");
+  assert.equal(item.registration_options[1].provider, "Namecheap");
 });

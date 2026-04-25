@@ -45,7 +45,7 @@ Ask your agent for domain ideas, shortlist checking, TLD pricing, or `.com`/doma
 
 Agents should present mixed results in separate traditional exact domain and domain hack groups when both are available.
 
-Explicit TLD searches can use any TLD in the bundled IANA root-zone snapshot. Pricing and registrar links remain curated metadata and may be unavailable for many TLDs.
+Explicit TLD searches can use any TLD in the bundled IANA root-zone snapshot. Registrar links prefer Cloudflare where supported, fall back to Namecheap otherwise, and preserve dedicated registry links where needed.
 
 You can also run the skill launcher directly:
 

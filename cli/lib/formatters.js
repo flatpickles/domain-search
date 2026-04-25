@@ -64,17 +64,24 @@ function formatResultLine(item) {
     item.description_source === "wiktionary" || item.description_source === "dictionaryapi"
       ? `[${sourceLabel}](${item.description_url || `https://en.wiktionary.org/wiki/${encodeURIComponent(sourceLabel)}`})`
       : `\`${sourceLabel}\``;
+  const isRegistrarLink = item.registration_kind && item.registration_kind.startsWith("registrar_");
   const registration = item.registration_provider && item.registration_url
-    ? item.registration_kind === "registrar_search"
+    ? isRegistrarLink
       ? ` Register via [${item.registration_provider}](${item.registration_url}).`
       : ` Official registry: [${item.registration_provider}](${item.registration_url}).`
     : "";
+  const fallbackRegistration =
+    item.fallback_registration_provider &&
+    item.fallback_registration_url &&
+    item.fallback_registration_provider !== item.registration_provider
+      ? ` Fallback: [${item.fallback_registration_provider}](${item.fallback_registration_url}).`
+      : "";
   const registrationNote = item.registration_note ? ` ${item.registration_note}` : "";
   const price = item.price !== null && item.price !== undefined ? ` Renewal: $${item.price}/year.` : "";
   const typeLabel = item.candidate_type === "brandable" ? "brandable" : "real-word";
   const verificationHint = item.verification_hint ? ` ${item.verification_hint}` : "";
 
-  return `- \`${item.domain}\` from ${sourceLink}: ${description} (${typeLabel}).${price}${registration}${registrationNote}${verificationHint}`;
+  return `- \`${item.domain}\` from ${sourceLink}: ${description} (${typeLabel}).${price}${registration}${fallbackRegistration}${registrationNote}${verificationHint}`;
 }
 
 function formatGroupedResults(lines, title, items) {
