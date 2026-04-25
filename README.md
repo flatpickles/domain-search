@@ -48,9 +48,9 @@ Agents should present mixed results in separate traditional exact domain and dom
 You can also run the skill launcher directly:
 
 ```bash
-./scripts/domain-search.sh search --words-file ./words.txt --limit 20 --progress-format human
-./scripts/domain-search.sh check --input examples/brandable-shortlist.json --progress-format human
-./scripts/domain-search.sh prices --max-price 20
+./domain-search.sh search --words-file ./words.txt --limit 20 --progress-format human
+./domain-search.sh check walk.in leashr.me --progress-format human
+./domain-search.sh prices --max-price 20
 ```
 
 ## CLI

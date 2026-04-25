@@ -27,7 +27,6 @@ Domain-search behavior to preserve:
 
 Skill notes:
 
-- The launcher is `scripts/domain-search.sh`.
+- The launcher is `domain-search.sh`.
 - The launcher resolves the real skill root and runs `cli/bin/domain-search.js`, so it works when the repo root is symlinked into a skills folder.
 - When using the skill, call the launcher directly and inspect repository internals only if the launcher fails.
-- Keep `examples/brandable-shortlist.json` aligned with the structured shortlist contract if that contract changes.

@@ -2,13 +2,11 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const { execFileSync } = require("node:child_process");
 const path = require("node:path");
-const fs = require("node:fs");
 
 const cliRoot = path.join(__dirname, "..");
 const skillRoot = path.join(cliRoot, "..");
 const cliPath = path.join(cliRoot, "bin", "domain-search.js");
-const skillScriptPath = path.join(skillRoot, "scripts", "domain-search.sh");
-const skillShortlistExample = path.join(skillRoot, "examples", "brandable-shortlist.json");
+const skillScriptPath = path.join(skillRoot, "domain-search.sh");
 const fixtureWords = path.join(__dirname, "fixtures", "words-small.txt");
 const fakeBinDir = path.join(__dirname, "fixtures");
 
@@ -256,17 +254,36 @@ test("skill launcher works from the skill root", () => {
   assert.equal(parsed.candidates.length, 1);
 });
 
-test("skill shortlist example is valid JSON and works with check --input", () => {
-  const example = JSON.parse(fs.readFileSync(skillShortlistExample, "utf8"));
-  assert.ok(Array.isArray(example));
-  assert.ok(example[0].domain);
+test("skill launcher checks structured shortlist JSON from stdin", () => {
+  const shortlist = JSON.stringify([
+    {
+      domain: "leashr.me",
+      label: "leashr",
+      word: "leashr",
+      candidate_type: "brandable",
+      source_type: "provided",
+      description: "Friendly dog-walking brand.",
+      description_source: "agent",
+      score: 31,
+    },
+    {
+      domain: "walk.in",
+      label: "walk",
+      word: "walk",
+      candidate_type: "real_word",
+      source_type: "provided",
+      description: "Direct, memorable service name.",
+      description_source: "user",
+      score: 42,
+    },
+  ]);
 
   const output = execFileSync(
     skillScriptPath,
     [
       "check",
       "--input",
-      skillShortlistExample,
+      "-",
       "--show-unknown",
       "--progress-format",
       "silent",
@@ -278,6 +295,7 @@ test("skill shortlist example is valid JSON and works with check --input", () =>
         ...process.env,
         PATH: `${fakeBinDir}:${process.env.PATH}`,
       },
+      input: shortlist,
     },
   );
   const parsed = JSON.parse(output);

@@ -14,7 +14,6 @@
     "bin",
     "lib",
     "data",
-    "examples",
     "index.js",
     "README.md",
     "LICENSE"

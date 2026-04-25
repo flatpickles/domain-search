@@ -35,13 +35,13 @@ Use the bundled launcher script directly. Do not inspect the repository structur
 Claude Code:
 
 ```bash
-${CLAUDE_SKILL_DIR}/scripts/domain-search.sh generate --words-file ./words.txt --limit 100
+${CLAUDE_SKILL_DIR}/domain-search.sh generate --words-file ./words.txt --limit 100
 ```
 
 Generic local invocation:
 
 ```bash
-./scripts/domain-search.sh generate --words-file ./words.txt --limit 100
+./domain-search.sh generate --words-file ./words.txt --limit 100
 ```
 
 ## Recommended Workflows
@@ -49,7 +49,7 @@ Generic local invocation:
 Open-ended discovery:
 
 ```bash
-./scripts/domain-search.sh search --words-file ./words.txt --limit 20 --progress-format human
+./domain-search.sh search --words-file ./words.txt --limit 20 --progress-format human
 ```
 
 When you use the default mixed search path, present the final results in two sections:
@@ -62,19 +62,19 @@ If both shapes survive checking, keep both visible in the final answer. Do not r
 Wordlist-driven generation when you want an intermediate filter step:
 
 ```bash
-./scripts/domain-search.sh generate --words-file ./words.txt --limit 200
+./domain-search.sh generate --words-file ./words.txt --limit 200
 ```
 
 Filter tool output externally and check:
 
 ```bash
-./scripts/domain-search.sh check --input shortlist.json --limit 20 --progress-format human
+./domain-search.sh check --input shortlist.json --limit 20 --progress-format human
 ```
 
 Direct provided shortlist:
 
 ```bash
-./scripts/domain-search.sh check --input shortlist.json --progress-format human
+./domain-search.sh check --input shortlist.json --progress-format human
 ```
 
 Structured shortlist contract:
@@ -94,18 +94,16 @@ Structured shortlist contract:
 ]
 ```
 
-Use [`examples/brandable-shortlist.json`](./examples/brandable-shortlist.json) as the copyable template.
-
 Plain text domain list:
 
 ```bash
-printf "walk.in\nromp.in\nleashr.me\n" | ./scripts/domain-search.sh check --input -
+printf "walk.in\nromp.in\nleashr.me\n" | ./domain-search.sh check --input -
 ```
 
 Use one-shot search only when you do not need an intermediate filtering step:
 
 ```bash
-./scripts/domain-search.sh search --words-file ./words.txt --limit 20 --progress-format human
+./domain-search.sh search --words-file ./words.txt --limit 20 --progress-format human
 ```
 
 Search now applies bounded progressive checking by default. When a ranked search stops early, use `search_truncated`, `remaining_candidates`, and `max_checks_applied` in the output to explain that more ranked candidates were available but not checked yet.
@@ -120,7 +118,7 @@ If confirmed-available full-word hacks are scarce, return fewer results and say 
 Inspect bundled pricing:
 
 ```bash
-./scripts/domain-search.sh prices --max-price 20
+./domain-search.sh prices --max-price 20
 ```
 
 Unknown-result fallback:
