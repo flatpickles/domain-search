@@ -1,8 +1,8 @@
 # domain-search CLI
 
-`domain-search` is the Node.js CLI used by the Domain Search skill. It can generate and check traditional `.com` domains, true whole-word domain hacks, and supplied brandable shortlists.
+`domain-search` is the Node.js CLI used by the Domain Search skill. It can generate and check traditional `.com` domains, true whole-word domain hacks, delegated IANA root-zone TLDs, and supplied brandable shortlists.
 
-The CLI enriches results with WHOIS availability, bundled TLD pricing, registrar links, and optional descriptions.
+The CLI enriches results with WHOIS/RDAP availability, bundled TLD pricing, registrar links, and optional descriptions. Pricing and registrar metadata are curated and incomplete; verification accepts any TLD in the bundled IANA root-zone snapshot.
 
 ## Install
 
@@ -47,6 +47,12 @@ Inspect bundled TLD pricing:
 domain-search prices --max-price 20
 ```
 
+Use every delegated root-zone TLD for an explicit search:
+
+```bash
+domain-search search --mode exact --all --words-file ./words.txt --limit 20 --progress-format human
+```
+
 ## Commands
 
 - `search`: generate candidates and check availability
@@ -54,7 +60,7 @@ domain-search prices --max-price 20
 - `check`: check a supplied shortlist, JSON file, plain text domain list, or direct domains/names
 - `prices`: show bundled TLD pricing and registrar metadata
 
-Without `--mode` or `--tlds`, `search` and `generate` use a mixed strategy: traditional `.com` domains plus a curated set of whole-word domain hacks.
+Without `--mode`, `--tlds`, `--all`, or `--max-price`, `search` and `generate` use a mixed strategy: traditional `.com` domains plus a curated set of whole-word domain hacks.
 
 Useful explicit modes:
 

@@ -1,5 +1,5 @@
 const tldMetadata = require("../data/tlds.json");
-const { normalizeTlds } = require("./candidates");
+const { getRootTlds, normalizeTlds } = require("./tlds");
 
 function buildPriceNote(entry) {
   if (!entry) {
@@ -9,12 +9,37 @@ function buildPriceNote(entry) {
   return `Bundled pricing was updated as of ${entry.price_updated_at} from ${entry.price_source_name} and may now be out of date.`;
 }
 
-function getAllTldPricing() {
-  return tldMetadata.map((entry) => ({
+function createPlaceholderEntry(tld) {
+  return {
+    tld,
+    annual_price_usd: null,
+    price_updated_at: null,
+    price_source_name: null,
+    price_source_url: null,
+    preferred_registration_provider: null,
+    fallback_registration_provider: null,
+    registration_options: [],
+    price_note: buildPriceNote(null),
+  };
+}
+
+function withComputedFields(entry) {
+  return {
     ...entry,
     registration_options: entry.registration_options || [],
     price_note: buildPriceNote(entry),
-  }));
+  };
+}
+
+function getAllTldPricing(options = {}) {
+  if (!options.includeAllRootTlds) {
+    return tldMetadata.map(withComputedFields);
+  }
+
+  const byTld = new Map(tldMetadata.map((entry) => [entry.tld, entry]));
+  return [...getRootTlds()]
+    .sort()
+    .map((tld) => withComputedFields(byTld.get(tld) || createPlaceholderEntry(tld)));
 }
 
 function getKnownTlds() {
@@ -28,25 +53,13 @@ function getTldPricing(options = {}) {
       ? null
       : Number(options.maxPrice);
 
-  let items = getAllTldPricing();
+  let items = getAllTldPricing({ includeAllRootTlds: Boolean(options.all) });
 
   if (explicitTlds && explicitTlds.length > 0) {
     const byTld = new Map(items.map((entry) => [entry.tld, entry]));
     items = explicitTlds.map((tld) => {
       const entry = byTld.get(tld);
-      return (
-        entry || {
-          tld,
-          annual_price_usd: null,
-          price_updated_at: null,
-          price_source_name: null,
-          price_source_url: null,
-          preferred_registration_provider: null,
-          fallback_registration_provider: null,
-          registration_options: [],
-          price_note: buildPriceNote(null),
-        }
-      );
+      return entry || createPlaceholderEntry(tld);
     });
   } else if (!options.all && maxPrice !== null) {
     items = items.filter((entry) => entry.annual_price_usd !== null && entry.annual_price_usd <= maxPrice);

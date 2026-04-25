@@ -1,25 +1,36 @@
 const { execFile } = require("node:child_process");
 const { promisify } = require("node:util");
+const { domainToASCII } = require("node:url");
 const {
   AVAILABLE_PATTERNS,
   RDAP_URL_TEMPLATES,
   REGISTERED_PATTERNS,
   WHOIS_HOST_OVERRIDES,
 } = require("./constants");
+const { normalizeTld } = require("./tlds");
 
 const execFileAsync = promisify(execFile);
+const IANA_RDAP_DNS_BOOTSTRAP_URL = "https://data.iana.org/rdap/dns.json";
 const WHOIS_SECTION_MARKER = /^#\s*whois\.[^\n]+\s*$/gim;
 let rdapQueue = Promise.resolve();
 let rdapNextReadyAt = 0;
+let rdapBootstrapPromise = null;
 
 function normalizeDomain(domain) {
-  return String(domain).trim().toLowerCase().replace(/^https?:\/\//, "").replace(/\/.*$/, "");
+  const trimmed = String(domain)
+    .trim()
+    .toLowerCase()
+    .replace(/^https?:\/\//, "")
+    .replace(/\/.*$/, "")
+    .replace(/\.$/, "");
+  const ascii = domainToASCII(trimmed);
+  return ascii || trimmed;
 }
 
 function getDomainTld(domain) {
   const normalized = normalizeDomain(domain);
   const parts = normalized.split(".");
-  return parts.length > 1 ? parts.at(-1) : "";
+  return parts.length > 1 ? normalizeTld(parts.at(-1)) : "";
 }
 
 function wait(ms) {
@@ -94,11 +105,78 @@ function getWhoisArgs(domain, options = {}) {
   return host ? ["-h", host, normalized] : [normalized];
 }
 
-function getRdapUrl(domain) {
+function buildRdapDomainUrl(baseUrl, domain) {
+  if (!baseUrl) return null;
+  return `${String(baseUrl).replace(/\/?$/, "/")}domain/${encodeURIComponent(normalizeDomain(domain))}`;
+}
+
+async function fetchRdapBootstrap(fetchFn, options = {}) {
+  const timeoutMs = Number(options.rdapBootstrapTimeout ?? 8000);
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const response = await fetchFn(options.rdapBootstrapUrl || IANA_RDAP_DNS_BOOTSTRAP_URL, {
+      headers: {
+        accept: "application/json",
+      },
+      redirect: "follow",
+      signal: controller.signal,
+    });
+
+    if (!response.ok) return null;
+    return await response.json();
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+async function loadRdapBootstrap(options = {}) {
+  if (options.rdapBootstrap) return options.rdapBootstrap;
+
+  const fetchFn = options.fetchFn || globalThis.fetch;
+  if (typeof fetchFn !== "function") return null;
+
+  const shouldUseSharedCache = !options.fetchFn && !options.rdapBootstrapUrl;
+  if (!shouldUseSharedCache) return fetchRdapBootstrap(fetchFn, options);
+
+  if (!rdapBootstrapPromise) {
+    rdapBootstrapPromise = fetchRdapBootstrap(fetchFn, options)
+      .then((data) => {
+        if (!data) rdapBootstrapPromise = null;
+        return data;
+      })
+      .catch(() => {
+        rdapBootstrapPromise = null;
+        return null;
+      });
+  }
+  return rdapBootstrapPromise;
+}
+
+function getRdapBootstrapBaseUrl(data, tld) {
+  const normalizedTld = normalizeTld(tld);
+  const services = Array.isArray(data?.services) ? data.services : [];
+
+  for (const service of services) {
+    const labels = Array.isArray(service?.[0]) ? service[0].map(normalizeTld) : [];
+    const urls = Array.isArray(service?.[1]) ? service[1] : [];
+    if (labels.includes(normalizedTld) && urls.length > 0) return urls[0];
+  }
+
+  return null;
+}
+
+async function getRdapUrl(domain, options = {}) {
   const tld = getDomainTld(domain);
   const template = RDAP_URL_TEMPLATES[tld];
-  if (!template) return null;
-  return template.replaceAll("{domain}", encodeURIComponent(domain));
+  if (template) return template.replaceAll("{domain}", encodeURIComponent(normalizeDomain(domain)));
+
+  const bootstrap = await loadRdapBootstrap(options);
+  const baseUrl = getRdapBootstrapBaseUrl(bootstrap, tld);
+  return buildRdapDomainUrl(baseUrl, domain);
 }
 
 async function runRdapRequest(task, options = {}) {
@@ -142,7 +220,8 @@ function rdapResponseMatchesDomain(data, domain) {
 }
 
 async function checkDomainViaRdap(domain, options = {}) {
-  const url = getRdapUrl(domain);
+  const normalized = normalizeDomain(domain);
+  const url = await getRdapUrl(normalized, options);
   if (!url) return null;
 
   const fetchFn = options.fetchFn || globalThis.fetch;
@@ -183,26 +262,26 @@ async function checkDomainViaRdap(domain, options = {}) {
 
     if (response.status === 404) {
       return {
-        domain,
+        domain: normalized,
         status: "AVAILABLE",
       };
     }
 
     if (!response.ok) {
       return {
-        domain,
+        domain: normalized,
         status: "UNKNOWN",
       };
     }
 
     const data = await response.json();
     return {
-      domain,
-      status: rdapResponseMatchesDomain(data, domain) ? "REGISTERED" : "UNKNOWN",
+      domain: normalized,
+      status: rdapResponseMatchesDomain(data, normalized) ? "REGISTERED" : "UNKNOWN",
     };
   } catch {
     return {
-      domain,
+      domain: normalized,
       status: "UNKNOWN",
     };
   }

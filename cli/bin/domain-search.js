@@ -30,7 +30,7 @@ function usage() {
     "  --limit <n>                  Result limit",
     "  --max-checks <n>             Maximum WHOIS checks",
     "  --max-price <n>              Use bundled TLD prices to limit selected TLDs",
-    "  --all                        Use every TLD in bundled pricing metadata",
+    "  --all                        Use every delegated IANA root-zone TLD",
     "  --format <json|markdown>     Output format",
     "  --output <path>              Write stdout payload to a file",
     "",
@@ -56,7 +56,7 @@ function usage() {
     `  ${script} brandable ...  => ${script} search --mode brandable ...`,
     "",
     "Default behavior:",
-    "  Without --mode or --tlds, generate/search uses a mixed strategy: .com plus a curated whole-word domain hack set.",
+    "  Without --mode, --tlds, --all, or --max-price, generate/search uses a mixed strategy: .com plus a curated whole-word domain hack set.",
     "  Search now applies bounded progressive checking by default and may return partial results with search_truncated=true.",
   ].join("\n");
 }

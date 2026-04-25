@@ -173,6 +173,43 @@ test("checkDomainViaRdap maps not-found responses to available", async () => {
   assert.equal(result.status, "AVAILABLE");
 });
 
+test("checkDomain uses IANA RDAP bootstrap fallback for non-curated TLDs", async () => {
+  const urls = [];
+  const result = await checkDomain("sunrise.academy", {
+    execFileFn: async () => ({
+      stdout: `% IANA WHOIS server
+domain:       ACADEMY
+status:       ACTIVE
+source:       IANA`,
+    }),
+    rdapBootstrap: {
+      services: [
+        [["academy"], ["https://rdap.example.test/"]],
+      ],
+    },
+    fetchFn: async (url) => {
+      urls.push(url);
+      return {
+        ok: false,
+        status: 404,
+        headers: {
+          get: () => null,
+        },
+        json: async () => ({
+          errorCode: 404,
+        }),
+      };
+    },
+  });
+
+  assert.equal(result.status, "AVAILABLE");
+  assert.deepEqual(urls, ["https://rdap.example.test/domain/sunrise.academy"]);
+});
+
+test("normalizeDomain converts IDN TLDs to A-labels", () => {
+  assert.equal(getDomainTld("brand.कॉम"), "xn--11b4c3d");
+});
+
 test("checkDomainViaRdap retries rate-limited responses", async () => {
   let attempts = 0;
 

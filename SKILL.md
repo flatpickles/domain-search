@@ -136,7 +136,7 @@ Inspect bundled pricing:
 Unknown-result fallback:
 
 1. Run `check` first.
-2. If the requested TLD is outside the bundled supported set, the tool should reject it up front instead of surfacing an inconclusive result.
+2. If the requested TLD is outside the delegated IANA root-zone set, the tool should reject it up front instead of surfacing an inconclusive result.
 3. Only surface results that the tool classifies as `AVAILABLE` in default output.
 4. If a result is `UNKNOWN`, report it as inconclusive and include the registrar link.
 
@@ -148,7 +148,7 @@ Unknown-result fallback:
 - For open-ended discovery without an explicit TLD, do not use `check` on agent-crafted non-`.com` ideas; only check tool-generated candidates or a user-provided shortlist.
 - For open-ended discovery without an explicit TLD, if the valid full-word hack pool is thin, say that directly and return a short list rather than filling space with junk.
 - Do not use external `jq` trimming/ranking unless the user explicitly wants custom post-processing.
-- Without `--mode` or `--tlds`, the default is a mixed search: `.com` plus a curated whole-word domain-hack set.
+- Without `--mode`, `--tlds`, `--all`, or `--max-price`, the default is a mixed search: `.com` plus a curated whole-word domain-hack set.
 - Use `--mode brandable` only with explicit source words; it does not fall back to the bundled dictionary and it emits `.com` candidates only in v1.
 - Do not force availability with filler endings like `co` or `company`; prefer broader source words, explicit `--mode brandable`, or a deliberate shortlisted `check` pass.
 - With `--limit`, mixed-mode `search` and mixed-shape `check` apply built-in soft balancing so the final shortlist keeps some traditional and some creative results when both are available.
@@ -161,8 +161,10 @@ Unknown-result fallback:
 - `check` is the preferred path for a user-provided shortlist, or for deliberate `.com` brandable shortlists built from explicit source words.
 - Use `--with-descriptions` only on final result sets.
 - Bundled price data is dated and advisory; the tool should say it may now be out of date.
+- The verification allowlist is the bundled IANA root-zone TLD snapshot, not the smaller pricing list.
+- WHOIS checks can fall back to IANA RDAP bootstrap data for delegated TLDs that do not have custom local RDAP metadata.
 - Registration links are curated per TLD and may point to either a registrar search page or the official registry.
 - Pricing source and registration source are separate; do not assume price metadata implies registrar support.
 - If no reliable bundled registration target is known, report that the registration link is unavailable rather than guessing.
-- If a requested TLD is outside the bundled supported verification set, fail closed and say the tool cannot deterministically verify it.
+- If a requested TLD is outside the delegated IANA root-zone set, fail closed and say the tool cannot verify that TLD.
 - When supplying coined names, include your own short `description` if you have one.

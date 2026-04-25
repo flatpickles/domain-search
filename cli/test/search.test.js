@@ -222,7 +222,7 @@ test("checkCandidates filters weak provided shortlist entries and re-ranks the r
   assert.equal(summary.results.find((item) => item.domain === "steady.st").domain_shape, "exact");
 });
 
-test("checkCandidates rejects unsupported TLDs for deterministic verification", async () => {
+test("checkCandidates rejects non-root-zone TLDs", async () => {
   await assert.rejects(
     () =>
       checkCandidates({
@@ -241,15 +241,59 @@ test("checkCandidates rejects unsupported TLDs for deterministic verification", 
           status: "AVAILABLE",
         }),
       }),
-    /Unsupported TLDs for deterministic verification in candidate checking: \.madeup\./,
+    /Unknown or unsupported TLDs in candidate checking: \.madeup\./,
   );
 });
 
-test("generateCandidates rejects unsupported TLDs for deterministic verification", () => {
-  assert.throws(
-    () => generateCandidates({ mode: "hack", tlds: ["ne"], words: ["retune"] }),
-    /Unsupported TLDs for deterministic verification in generation: \.ne\./,
-  );
+test("generateCandidates supports delegated root-zone TLDs without bundled pricing", () => {
+  const generated = generateCandidates({
+    mode: "exact",
+    tlds: ["academy"],
+    words: ["sunrise"],
+  });
+
+  assert.ok(generated.candidates.some((candidate) => candidate.domain === "sunrise.academy"));
+});
+
+test("generateCandidates treats all mode as an explicit root-zone TLD scope", () => {
+  const generated = generateCandidates({
+    all: true,
+    words: ["sunrise"],
+  });
+
+  assert.equal(generated.mode, "exact");
+  assert.ok(generated.tlds.includes("academy"));
+  assert.ok(generated.candidates.some((candidate) => candidate.domain === "sunrise.academy"));
+});
+
+test("checkCandidates supports delegated root-zone TLDs without bundled pricing", async () => {
+  const summary = await checkCandidates({
+    candidates: ["sunrise.academy"],
+    progressFormat: "silent",
+    checkDomainFn: async (domain) => ({
+      domain,
+      status: "AVAILABLE",
+    }),
+  });
+
+  assert.equal(summary.results[0].domain, "sunrise.academy");
+  assert.equal(summary.results[0].price, null);
+  assert.equal(summary.results[0].registration_url, null);
+  assert.match(summary.results[0].registration_note, /No reliable bundled registration target/);
+});
+
+test("checkCandidates normalizes IDN TLDs to root-zone A-labels", async () => {
+  const summary = await checkCandidates({
+    candidates: ["brand.कॉम"],
+    progressFormat: "silent",
+    checkDomainFn: async (domain) => ({
+      domain,
+      status: "AVAILABLE",
+    }),
+  });
+
+  assert.equal(summary.results[0].domain, "brand.xn--11b4c3d");
+  assert.equal(summary.results[0].tld, "xn--11b4c3d");
 });
 
 test("searchDomains combines generate and check phases", async () => {
@@ -468,6 +512,15 @@ test("getTldPricing can return explicit unknown TLD placeholders", () => {
   assert.equal(pricing.items[0].tld, "madeup");
   assert.equal(pricing.items[0].annual_price_usd, null);
   assert.deepEqual(pricing.items[0].registration_options, []);
+});
+
+test("getTldPricing all mode includes delegated root-zone TLDs without pricing", () => {
+  const pricing = getTldPricing({ all: true });
+  const byTld = new Map(pricing.items.map((item) => [item.tld, item]));
+
+  assert.ok(byTld.has("academy"));
+  assert.equal(byTld.get("academy").annual_price_usd, null);
+  assert.ok(byTld.has("com"));
 });
 
 test("getTldPricing exposes broader hack-friendly price coverage under a max price", () => {

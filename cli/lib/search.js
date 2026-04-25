@@ -15,12 +15,12 @@ const {
   DEFAULT_MIXED_CREATIVE_TLDS,
 } = require("./constants");
 const { fetchDescription } = require("./descriptions");
-const { enrichWithPricing, getKnownTlds, resolveSearchTlds } = require("./pricing");
+const { enrichWithPricing, resolveSearchTlds } = require("./pricing");
+const { assertKnownRootTlds } = require("./tlds");
 const { buildWordSet, loadWords, normalizeAlphaWord, normalizeWords } = require("./words");
 const { checkDomain, getDomainTld, normalizeDomain } = require("./whois");
 
 const DEFAULT_SEARCH_LIMIT = 20;
-const SUPPORTED_VERIFICATION_TLDS = getKnownTlds();
 
 function resolveNonNegativeInteger(value, name, fallback) {
   if (value === undefined || value === null) return fallback;
@@ -44,17 +44,8 @@ function resolvePositiveInteger(value, name, fallback) {
   return numeric;
 }
 
-function formatTldList(tlds) {
-  return tlds.map((tld) => `.${tld}`).join(", ");
-}
-
 function assertSupportedVerificationTlds(tlds, context) {
-  const unsupported = [...new Set((tlds || []).filter(Boolean))].filter((tld) => !SUPPORTED_VERIFICATION_TLDS.has(tld));
-  if (unsupported.length === 0) return;
-
-  throw new Error(
-    `Unsupported TLDs for deterministic verification in ${context}: ${formatTldList(unsupported)}.`,
-  );
+  assertKnownRootTlds(tlds, context);
 }
 
 async function runPool(items, concurrency, worker, shouldStop) {
@@ -242,9 +233,9 @@ function selectBalancedResults(items, limit, mode) {
   };
 }
 
-function resolveMode(mode, tlds) {
+function resolveMode(mode, hasExplicitTldScope) {
   if (mode === "exact" || mode === "hack" || mode === "brandable") return mode;
-  return tlds ? "exact" : "mixed";
+  return hasExplicitTldScope ? "exact" : "mixed";
 }
 
 function resolveGenerateOptions(options = {}) {
@@ -262,7 +253,8 @@ function resolveGenerateOptions(options = {}) {
     all: options.all,
   });
   assertSupportedVerificationTlds(resolvedTlds, "generation");
-  const mode = resolveMode(requestedMode, options.tlds);
+  const hasExplicitTldScope = Boolean(options.tlds || options.all || options.maxPrice !== undefined);
+  const mode = resolveMode(requestedMode, hasExplicitTldScope);
   const emitLimit =
     resolveNonNegativeInteger(options.emitLimit, "emitLimit", null);
 

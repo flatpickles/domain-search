@@ -123,7 +123,7 @@ test("search supports explicit brandable mode and exposes bounded-search metadat
   assert.equal(typeof parsed.max_checks_applied, "number");
 });
 
-test("check rejects unsupported TLDs for deterministic verification", () => {
+test("check rejects non-root-zone TLDs", () => {
   assert.throws(
     () =>
       runCli([
@@ -132,7 +132,7 @@ test("check rejects unsupported TLDs for deterministic verification", () => {
         "--progress-format",
         "silent",
       ]),
-    /Unsupported TLDs for deterministic verification in candidate checking: \.test\./,
+    /Unknown or unsupported TLDs in candidate checking: \.test\./,
   );
 });
 

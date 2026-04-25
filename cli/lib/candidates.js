@@ -2,25 +2,11 @@ const {
   DEFAULT_EXACT_TLDS,
   DEFAULT_HACK_TLDS,
 } = require("./constants");
+const { normalizeTlds } = require("./tlds");
 const { buildWordSet, isKnownWord, normalizeAlphaWord } = require("./words");
 
 const BLOCKED_CORPORATE_SOURCE_WORDS = new Set(["company", "corp", "inc", "llc", "ltd"]);
 const BLOCKED_CORPORATE_TAILS = ["company", "corp", "inc", "llc", "ltd"];
-
-function normalizeTlds(tlds, fallback) {
-  const source =
-    typeof tlds === "string"
-      ? tlds.split(",")
-      : Array.isArray(tlds)
-        ? tlds
-        : fallback;
-
-  return [...new Set(
-    source
-      .map((value) => String(value).trim().toLowerCase().replace(/^\./, ""))
-      .filter(Boolean),
-  )];
-}
 
 function scoreLabel(label) {
   let score = 0;

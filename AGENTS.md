@@ -14,7 +14,7 @@ Domain-search behavior to preserve:
 - Use `search` for open-ended domain discovery.
 - Use `generate` only when an intermediate filtering step is needed.
 - Use `check` for user-provided or deliberately curated shortlists.
-- Without `--mode` or `--tlds`, preserve the mixed default: traditional `.com` domains plus true whole-word domain hacks.
+- Without `--mode`, `--tlds`, `--all`, or `--max-price`, preserve the mixed default: traditional `.com` domains plus true whole-word domain hacks.
 - In mixed-mode responses, keep traditional exact domains and domain hacks visible as separate groups when both are available.
 - Treat a domain hack as valid only when the label plus TLD reads as one ordinary word. Do not pad weak result sets with phrase-like hacks, arbitrary suffix domains, or coined non-`.com` alternatives.
 - Use `--mode exact` for traditional `.com` domains only.
@@ -23,7 +23,7 @@ Domain-search behavior to preserve:
 - Use `--with-descriptions` only on final result sets.
 - Bundled price data is advisory and static; update the dated metadata if pricing is refreshed.
 - If no reliable bundled registration target exists, leave the registration link blank instead of guessing.
-- If a requested TLD is outside the supported verification set, fail closed rather than presenting an inconclusive result as available.
+- If a requested TLD is outside the delegated IANA root-zone set, fail closed rather than presenting an inconclusive result as available.
 
 Skill notes:
 
