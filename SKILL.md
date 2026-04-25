@@ -168,7 +168,7 @@ Unknown-result fallback:
 - Use `--with-descriptions` only on final result sets.
 - Bundled price data is dated and advisory; the tool should say it may now be out of date.
 - The verification allowlist is the bundled IANA root-zone TLD snapshot, not the smaller pricing list.
-- WHOIS checks can fall back to IANA RDAP bootstrap data for delegated TLDs that do not have custom local RDAP metadata.
+- WHOIS checks can fall back to IANA RDAP bootstrap data for delegated TLDs that do not have custom local RDAP metadata. Bootstrap RDAP can confirm registered domains, but bootstrap 404/not-found responses are treated as inconclusive unless the TLD has curated local RDAP availability handling.
 - Registration links prefer Cloudflare for TLDs in the bundled Cloudflare Registrar support snapshot, use Namecheap as the default fallback, and preserve dedicated registry links for TLDs that need them.
 - Result JSON can include both preferred registrar fields and `direct_registration_url`; use `direct_registration_url` for clickable available-domain names because it is the per-domain action link.
 - Pricing source and registration source are separate; do not assume price metadata implies registrar support.

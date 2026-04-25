@@ -28,7 +28,7 @@ The skill and CLI need:
 
 - Node.js 22 or newer
 - `whois` available on your `PATH` for live availability checks
-- network access for live WHOIS checks
+- network access for live WHOIS/RDAP checks
 
 If you do not know whether you have those installed, ask Codex or Claude to check your computer for Node.js 22 and `whois`, then install the GitHub skill above.
 
@@ -79,7 +79,7 @@ You can also run the skill launcher directly:
 
 ## Codex Approval
 
-Live availability checks use WHOIS/RDAP network lookups. In Codex, `search` and `check` may ask to run `./domain-search.sh search` or `./domain-search.sh check` outside the sandbox so those lookups can complete.
+Live availability checks use WHOIS/RDAP network lookups. Bootstrap RDAP can confirm registered domains, but bootstrap not-found responses are treated as inconclusive unless the TLD has curated availability handling. In Codex, `search` and `check` may ask to run `./domain-search.sh search` or `./domain-search.sh check` outside the sandbox so those lookups can complete.
 
 Approve once for a single run, or choose the "don't ask again" option for those launcher prefixes if you want repeated verified searches without prompts. `generate` can produce unverified ideas without live availability checks.
 

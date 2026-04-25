@@ -173,7 +173,7 @@ test("checkDomainViaRdap maps not-found responses to available", async () => {
   assert.equal(result.status, "AVAILABLE");
 });
 
-test("checkDomain uses IANA RDAP bootstrap fallback for non-curated TLDs", async () => {
+test("checkDomain uses IANA RDAP bootstrap fallback to confirm registered non-curated TLDs", async () => {
   const urls = [];
   const result = await checkDomain("sunrise.academy", {
     execFileFn: async () => ({
@@ -190,20 +190,50 @@ source:       IANA`,
     fetchFn: async (url) => {
       urls.push(url);
       return {
-        ok: false,
-        status: 404,
+        ok: true,
+        status: 200,
         headers: {
           get: () => null,
         },
         json: async () => ({
-          errorCode: 404,
+          objectClassName: "domain",
+          ldhName: "sunrise.academy",
         }),
       };
     },
   });
 
-  assert.equal(result.status, "AVAILABLE");
+  assert.equal(result.status, "REGISTERED");
   assert.deepEqual(urls, ["https://rdap.example.test/domain/sunrise.academy"]);
+});
+
+test("checkDomain treats IANA RDAP bootstrap not-found responses as inconclusive by default", async () => {
+  const result = await checkDomain("kepler.systems", {
+    execFileFn: async () => ({
+      stdout: `% IANA WHOIS server
+domain:       SYSTEMS
+status:       ACTIVE
+source:       IANA`,
+    }),
+    rdapBootstrap: {
+      services: [
+        [["systems"], ["https://rdap.identitydigital.services/rdap/"]],
+      ],
+    },
+    fetchFn: async () => ({
+      ok: false,
+      status: 404,
+      headers: {
+        get: () => null,
+      },
+      json: async () => ({
+        errorCode: 404,
+        title: "Object not found",
+      }),
+    }),
+  });
+
+  assert.equal(result.status, "UNKNOWN");
 });
 
 test("normalizeDomain converts IDN TLDs to A-labels", () => {

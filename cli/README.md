@@ -2,7 +2,7 @@
 
 `domain-search` is the Node.js CLI used by the Domain Search skill. It can generate and check traditional `.com` domains, true whole-word domain hacks, delegated IANA root-zone TLDs, and supplied brandable shortlists.
 
-The CLI enriches results with WHOIS/RDAP availability, bundled TLD pricing, registrar metadata, per-domain direct registration/search links where available, and optional descriptions. Verification accepts any TLD in the bundled IANA root-zone snapshot.
+The CLI enriches results with WHOIS/RDAP availability, bundled TLD pricing, registrar metadata, per-domain direct registration/search links where available, and optional descriptions. Verification accepts any TLD in the bundled IANA root-zone snapshot. Bootstrap RDAP can confirm registered domains, but bootstrap not-found responses are inconclusive unless the TLD has curated availability handling.
 
 Registrar metadata prefers Cloudflare for TLDs in the bundled Cloudflare Registrar support snapshot, uses Namecheap as the default fallback for other public root-zone TLDs, and preserves dedicated registry links for TLDs that need them. Checked result JSON includes `direct_registration_url` when the tool has a domain-specific action link.
 
@@ -12,7 +12,7 @@ Requirements:
 
 - Node.js 22 or newer
 - `whois` available on your `PATH`
-- network access for live WHOIS checks
+- network access for live WHOIS/RDAP checks
 
 From a clone of the repo:
 

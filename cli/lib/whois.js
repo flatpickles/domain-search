@@ -169,14 +169,23 @@ function getRdapBootstrapBaseUrl(data, tld) {
   return null;
 }
 
-async function getRdapUrl(domain, options = {}) {
+async function getRdapLookup(domain, options = {}) {
   const tld = getDomainTld(domain);
   const template = RDAP_URL_TEMPLATES[tld];
-  if (template) return template.replaceAll("{domain}", encodeURIComponent(normalizeDomain(domain)));
+  if (template) {
+    return {
+      url: template.replaceAll("{domain}", encodeURIComponent(normalizeDomain(domain))),
+      notFoundStatus: "AVAILABLE",
+    };
+  }
 
   const bootstrap = await loadRdapBootstrap(options);
   const baseUrl = getRdapBootstrapBaseUrl(bootstrap, tld);
-  return buildRdapDomainUrl(baseUrl, domain);
+  const url = buildRdapDomainUrl(baseUrl, domain);
+  return {
+    url,
+    notFoundStatus: options.trustRdapBootstrapNotFound ? "AVAILABLE" : "UNKNOWN",
+  };
 }
 
 async function runRdapRequest(task, options = {}) {
@@ -221,7 +230,8 @@ function rdapResponseMatchesDomain(data, domain) {
 
 async function checkDomainViaRdap(domain, options = {}) {
   const normalized = normalizeDomain(domain);
-  const url = await getRdapUrl(normalized, options);
+  const lookup = await getRdapLookup(normalized, options);
+  const url = lookup.url;
   if (!url) return null;
 
   const fetchFn = options.fetchFn || globalThis.fetch;
@@ -263,7 +273,7 @@ async function checkDomainViaRdap(domain, options = {}) {
     if (response.status === 404) {
       return {
         domain: normalized,
-        status: "AVAILABLE",
+        status: lookup.notFoundStatus,
       };
     }
 
