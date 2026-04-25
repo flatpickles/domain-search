@@ -104,6 +104,10 @@ function renderRegistrationUrl(option, domain) {
   return option.url_template.replaceAll("{domain}", encodeURIComponent(domain));
 }
 
+function findDirectRegistrationOption(options) {
+  return options.find((option) => option?.url_template) || null;
+}
+
 function buildRegistrationNote(option) {
   if (!option) {
     return "No reliable bundled registration target is available for this TLD.";
@@ -129,6 +133,7 @@ function resolveRegistration(entry, domain) {
     options.find((item) => item.provider === fallbackProvider && item.provider !== option?.provider) ||
     options.find((item) => item.provider !== option?.provider) ||
     null;
+  const directOption = findDirectRegistrationOption(options);
 
   return {
     preferred_registration_provider: preferredProvider,
@@ -140,6 +145,12 @@ function resolveRegistration(entry, domain) {
     registration_source_url: option?.source_url || null,
     registration_verified_at: option?.verified_at || null,
     registration_note: buildRegistrationNote(option),
+    direct_registration_provider: directOption?.provider || null,
+    direct_registration_url: renderRegistrationUrl(directOption, domain),
+    direct_registration_kind: directOption?.kind || null,
+    direct_registration_source: directOption?.source_name || null,
+    direct_registration_source_url: directOption?.source_url || null,
+    direct_registration_verified_at: directOption?.verified_at || null,
     fallback_registration_url: renderRegistrationUrl(fallbackOption, domain),
     fallback_registration_kind: fallbackOption?.kind || null,
     fallback_registration_source: fallbackOption?.source_name || null,

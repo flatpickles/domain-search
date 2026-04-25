@@ -36,10 +36,10 @@ function isCloudflareSupportedTld(tld) {
 function buildCloudflareOption() {
   return {
     provider: "Cloudflare",
-    kind: "registrar_homepage",
-    url: "https://domains.cloudflare.com/",
-    source_name: "Cloudflare Registrar TLD policies",
-    source_url: "https://domains.cloudflare.com/tld-policies",
+    kind: "registrar_register",
+    url: "https://dash.cloudflare.com/?to=/:account/registrar/register",
+    source_name: "Cloudflare Registrar register domains page",
+    source_url: "https://developers.cloudflare.com/registrar/get-started/register-domain/",
     verified_at: CLOUDFLARE_VERIFIED_AT,
   };
 }

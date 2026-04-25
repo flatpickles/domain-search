@@ -62,14 +62,53 @@ test("formatResults emits markdown for checked results with registrar metadata",
         registration_provider: "Namecheap",
         registration_kind: "registrar_search",
         registration_url: "https://example.test",
+        direct_registration_provider: "Namecheap",
+        direct_registration_kind: "registrar_search",
+        direct_registration_url: "https://example.test",
         price: 18.48,
       },
     ],
   });
 
+  assert.match(output, /\[`chemi\.st`\]\(https:\/\/example\.test\)/);
   assert.match(output, /Register via \[Namecheap\]/);
   assert.match(output, /Renewal: \$18.48/);
   assert.match(output, /A scientist or expert in chemistry/);
+});
+
+test("formatResults links domains to fallback direct registration when preferred registrar is generic", () => {
+  const output = formatResults({
+    kind: "check",
+    mode: "exact",
+    tlds: ["academy"],
+    checked: 1,
+    candidatePool: 1,
+    available: 1,
+    unknown: 0,
+    results: [
+      {
+        word: "sunrise",
+        domain: "sunrise.academy",
+        candidate_type: "real_word",
+        registration_provider: "Cloudflare",
+        registration_kind: "registrar_register",
+        registration_url: "https://dash.cloudflare.com/?to=/:account/registrar/register",
+        direct_registration_provider: "Namecheap",
+        direct_registration_kind: "registrar_search",
+        direct_registration_url: "https://www.namecheap.com/domains/registration/results/?domain=sunrise.academy",
+        fallback_registration_provider: "Namecheap",
+        fallback_registration_url: "https://www.namecheap.com/domains/registration/results/?domain=sunrise.academy",
+      },
+    ],
+  });
+
+  assert.match(
+    output,
+    /\[`sunrise\.academy`\]\(https:\/\/www\.namecheap\.com\/domains\/registration\/results\/\?domain=sunrise\.academy\)/,
+  );
+  assert.match(output, /Register via \[Namecheap\]/);
+  assert.match(output, /Preferred registrar: \[Cloudflare\]/);
+  assert.doesNotMatch(output, /Fallback: \[Namecheap\]/);
 });
 
 test("formatResults groups mixed real-word and brandable results", () => {

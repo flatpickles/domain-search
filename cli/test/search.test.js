@@ -279,10 +279,12 @@ test("checkCandidates supports delegated root-zone TLDs without bundled pricing"
   assert.equal(summary.results[0].domain, "sunrise.academy");
   assert.equal(summary.results[0].price, null);
   assert.equal(summary.results[0].registration_provider, "Cloudflare");
-  assert.equal(summary.results[0].registration_kind, "registrar_homepage");
+  assert.equal(summary.results[0].registration_kind, "registrar_register");
   assert.equal(summary.results[0].fallback_registration_provider, "Namecheap");
+  assert.equal(summary.results[0].direct_registration_provider, "Namecheap");
+  assert.match(summary.results[0].direct_registration_url, /namecheap\.com/);
   assert.match(summary.results[0].fallback_registration_url, /namecheap\.com/);
-  assert.match(summary.results[0].registration_url, /domains\.cloudflare\.com/);
+  assert.match(summary.results[0].registration_url, /dash\.cloudflare\.com/);
 });
 
 test("checkCandidates normalizes IDN TLDs to root-zone A-labels", async () => {
@@ -537,6 +539,7 @@ test("Cloudflare-supported TLDs prefer Cloudflare with Namecheap fallback", () =
     item.registration_options.map((option) => option.provider),
     ["Cloudflare", "Namecheap"],
   );
+  assert.equal(item.registration_options[0].kind, "registrar_register");
 });
 
 test("non-Cloudflare root-zone TLDs fall back to Namecheap", () => {

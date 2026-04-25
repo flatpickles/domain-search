@@ -88,6 +88,12 @@ Direct provided shortlist:
 ./domain-search.sh check --input shortlist.json --progress-format human
 ```
 
+When presenting final checked results, preserve actionable per-domain links. If a result has
+`direct_registration_url`, render the available domain itself as a Markdown link to that URL.
+Otherwise use `registration_url` only when it is a registrar link. Do not collapse available
+domains into generic "Cloudflare Domains" or "Namecheap search" starting points when per-domain
+links are present. If only a generic dashboard or registry page is bundled, say that directly.
+
 Structured shortlist contract:
 
 ```json
@@ -164,6 +170,7 @@ Unknown-result fallback:
 - The verification allowlist is the bundled IANA root-zone TLD snapshot, not the smaller pricing list.
 - WHOIS checks can fall back to IANA RDAP bootstrap data for delegated TLDs that do not have custom local RDAP metadata.
 - Registration links prefer Cloudflare for TLDs in the bundled Cloudflare Registrar support snapshot, use Namecheap as the default fallback, and preserve dedicated registry links for TLDs that need them.
+- Result JSON can include both preferred registrar fields and `direct_registration_url`; use `direct_registration_url` for clickable available-domain names because it is the per-domain action link.
 - Pricing source and registration source are separate; do not assume price metadata implies registrar support.
 - If no reliable bundled registration target is known, report that the registration link is unavailable rather than guessing.
 - If a requested TLD is outside the delegated IANA root-zone set, fail closed and say the tool cannot verify that TLD.

@@ -1,6 +1,6 @@
 # Domain Search Skill
 
-`domain-search` is an agent skill for finding and checking domain names. It helps agents generate traditional `.com` ideas, true whole-word domain hacks, and supplied brandable shortlists, then enrich results with availability, bundled pricing, registrar links, and optional descriptions.
+`domain-search` is an agent skill for finding and checking domain names. It helps agents generate traditional `.com` ideas, true whole-word domain hacks, and supplied brandable shortlists, then enrich results with availability, bundled pricing, direct registrar links where available, and optional descriptions.
 
 The skill is intentionally unopinionated: it provides candidate generation and verification, while the user or agent handles taste, theme, and final naming judgment.
 
@@ -67,7 +67,7 @@ Ask your agent for domain ideas, shortlist checking, TLD pricing, or `.com`/doma
 
 Agents should present mixed results in separate traditional exact domain and domain hack groups when both are available.
 
-Explicit TLD searches can use any TLD in the bundled IANA root-zone snapshot. Registrar links prefer Cloudflare where supported, fall back to Namecheap otherwise, and preserve dedicated registry links where needed.
+Explicit TLD searches can use any TLD in the bundled IANA root-zone snapshot. Registrar metadata prefers Cloudflare where supported, includes per-domain direct registration/search links where available, falls back to Namecheap otherwise, and preserves dedicated registry links where needed.
 
 You can also run the skill launcher directly:
 

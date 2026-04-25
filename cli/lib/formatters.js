@@ -28,6 +28,16 @@ function groupByVerification(results) {
   };
 }
 
+function isRegisteredResult(item) {
+  return item.verification_status === "registered" || item.status === "REGISTERED";
+}
+
+function formatDomainLabel(item, isRegistrarLink) {
+  const directUrl = item.direct_registration_url || (isRegistrarLink ? item.registration_url : null);
+  const actionUrl = !isRegisteredResult(item) ? directUrl : null;
+  return actionUrl ? `[\`${item.domain}\`](${actionUrl})` : `\`${item.domain}\``;
+}
+
 function formatGenerateMarkdown(summary) {
   const tldList = (summary.tlds || []).map((tld) => `.${tld}`).join(", ");
   const lines = [
@@ -65,15 +75,25 @@ function formatResultLine(item) {
       ? `[${sourceLabel}](${item.description_url || `https://en.wiktionary.org/wiki/${encodeURIComponent(sourceLabel)}`})`
       : `\`${sourceLabel}\``;
   const isRegistrarLink = item.registration_kind && item.registration_kind.startsWith("registrar_");
+  const domainLabel = formatDomainLabel(item, isRegistrarLink);
+  const directRegistration =
+    item.direct_registration_provider && item.direct_registration_url && !isRegisteredResult(item)
+      ? ` Register via [${item.direct_registration_provider}](${item.direct_registration_url}).`
+      : "";
   const registration = item.registration_provider && item.registration_url
-    ? isRegistrarLink
-      ? ` Register via [${item.registration_provider}](${item.registration_url}).`
-      : ` Official registry: [${item.registration_provider}](${item.registration_url}).`
+    ? item.direct_registration_url && item.direct_registration_url === item.registration_url
+      ? ""
+      : isRegistrarLink
+        ? item.direct_registration_url
+          ? ` Preferred registrar: [${item.registration_provider}](${item.registration_url}).`
+          : ` Register via [${item.registration_provider}](${item.registration_url}).`
+        : ` Official registry: [${item.registration_provider}](${item.registration_url}).`
     : "";
   const fallbackRegistration =
     item.fallback_registration_provider &&
     item.fallback_registration_url &&
-    item.fallback_registration_provider !== item.registration_provider
+    item.fallback_registration_provider !== item.registration_provider &&
+    item.fallback_registration_provider !== item.direct_registration_provider
       ? ` Fallback: [${item.fallback_registration_provider}](${item.fallback_registration_url}).`
       : "";
   const registrationNote = item.registration_note ? ` ${item.registration_note}` : "";
@@ -81,7 +101,7 @@ function formatResultLine(item) {
   const typeLabel = item.candidate_type === "brandable" ? "brandable" : "real-word";
   const verificationHint = item.verification_hint ? ` ${item.verification_hint}` : "";
 
-  return `- \`${item.domain}\` from ${sourceLink}: ${description} (${typeLabel}).${price}${registration}${fallbackRegistration}${registrationNote}${verificationHint}`;
+  return `- ${domainLabel} from ${sourceLink}: ${description} (${typeLabel}).${price}${directRegistration}${registration}${fallbackRegistration}${registrationNote}${verificationHint}`;
 }
 
 function formatGroupedResults(lines, title, items) {
