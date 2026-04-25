@@ -4,13 +4,35 @@
 
 The skill is intentionally unopinionated: it provides candidate generation and verification, while the user or agent handles taste, theme, and final naming judgment.
 
-## Install
+## Choose Your Setup
 
-Requirements:
+If you use Codex, Claude, or another agent app with a non-technical skills flow, add this GitHub repo as a skill:
+
+```text
+https://github.com/flatpickles/domain-search
+```
+
+If the app has an "Add from GitHub" or "Skills" screen, paste that URL. If it asks for a local folder, clone the repo first and select the cloned `domain-search` folder. The skill root is the repository root, and `SKILL.md` must stay at the top level.
+
+After installing, try a plain-language prompt:
+
+```text
+Use the domain-search skill to find available domain names for a quiet note-taking app. Prefer .com names, but include strong domain hacks if they read as real words.
+```
+
+Give the agent project or theme context before broad searches so the results are useful rather than a flat dump.
+
+## Requirements
+
+The skill and CLI need:
 
 - Node.js 22 or newer
-- `whois` available on your `PATH`
+- `whois` available on your `PATH` for live availability checks
 - network access for live WHOIS checks
+
+If you do not know whether you have those installed, ask Codex or Claude to check your computer for Node.js 22 and `whois`, then install the GitHub skill above.
+
+## Install In Local Skills Folders
 
 Clone directly into a global Codex skills folder:
 
@@ -34,7 +56,7 @@ ln -s /path/to/domain-search ~/.codex/skills/domain-search
 ln -s /path/to/domain-search ~/.claude/skills/domain-search
 ```
 
-The skill root is the repository root. `SKILL.md` must be at the top level of the cloned or symlinked directory.
+Restart or reload your agent app if it only scans skills at startup.
 
 ## Use
 
