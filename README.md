@@ -53,6 +53,12 @@ You can also run the skill launcher directly:
 ./domain-search.sh prices --max-price 20
 ```
 
+## Codex Approval
+
+Live availability checks use WHOIS/RDAP network lookups. In Codex, `search` and `check` may ask to run `./domain-search.sh search` or `./domain-search.sh check` outside the sandbox so those lookups can complete.
+
+Approve once for a single run, or choose the "don't ask again" option for those launcher prefixes if you want repeated verified searches without prompts. `generate` can produce unverified ideas without live availability checks.
+
 ## CLI
 
 The skill is powered by a standalone Node.js CLI in [`cli/`](./cli). See [`cli/README.md`](./cli/README.md) for direct CLI installation and usage.

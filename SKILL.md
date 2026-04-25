@@ -28,6 +28,17 @@ Or:
 1. only use an external shortlist when the user already supplied it, or when the user explicitly asked for `.com` brandables from a supplied source list
 2. pass that shortlist directly to `check`
 
+## Prompt-Minimizing Live Checks
+
+`search` and `check` run live WHOIS/RDAP availability checks. In sandboxed agents such as Codex, these may require approval to run outside the sandbox.
+
+When verified availability is needed, choose one appropriately sized live command for the user's request instead of running a small check and then an automatic wider follow-up check.
+If the user asked for a larger or more exhaustive result set, set `--limit` and, when useful, `--max-checks` on the first `search` or `check` command.
+Do not run a second wider `check` just because `search_truncated`, `remaining_candidates`, or a thin result set shows more candidates are available to inspect; report that fact and let the user decide whether to request a deeper pass.
+
+Do not use `--show-unknown` in normal final-result searches. Only include unknowns when the user explicitly asks for inconclusive results, diagnostics, or broader status reporting.
+If live-check approval is denied, fall back to `generate` when useful and label the ideas as unverified.
+
 ## Launcher
 
 Use the bundled launcher script directly. Do not inspect the repository structure or try to locate the CLI implementation unless the launcher fails.
@@ -107,6 +118,7 @@ Use one-shot search only when you do not need an intermediate filtering step:
 ```
 
 Search now applies bounded progressive checking by default. When a ranked search stops early, use `search_truncated`, `remaining_candidates`, and `max_checks_applied` in the output to explain that more ranked candidates were available but not checked yet.
+Do not run an automatic wider follow-up check when a search stops early; summarize the checked results and mention that more candidates remain unchecked.
 Do not hand-build arbitrary non-`.com` domains and call them hacks.
 When the user did not explicitly ask for a TLD, do not invent non-`.com` exact domains or coined non-`.com` brandables like `steady.st`, `equilia.in`, or `steadia.in`.
 For open-ended unspecified-TLD discovery, use `search` and keep the result space to `.com` exact domains plus true whole-word hacks.
