@@ -27,5 +27,6 @@ Domain-search behavior to preserve:
 Skill notes:
 
 - The launcher is `skill/scripts/domain-search.sh`.
+- The skill root is `skill/`, not the repository root. User-facing docs should tell people to clone the repo somewhere stable and symlink `skill/` into their global Codex or Claude skills folder.
 - When using the skill, call the launcher directly and inspect repository internals only if the launcher fails.
 - Keep `skill/examples/brandable-shortlist.json` aligned with the structured shortlist contract if that contract changes.

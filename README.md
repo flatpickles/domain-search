@@ -57,13 +57,22 @@ domain-search prices --max-price 20
 
 Without `--mode` or `--tlds`, `search` uses a mixed strategy: traditional `.com` domains plus a curated set of whole-word domain hacks.
 
-## Codex Skill
+## Codex And Claude Skills
 
-The bundled skill lives in [`skill/`](./skill). After cloning the repo, install it with:
+The bundled skill lives in [`skill/`](./skill). Clone the repo somewhere stable, then symlink that `skill/` directory into your global skills folder.
+
+Codex:
 
 ```bash
 mkdir -p ~/.codex/skills
 ln -s "$PWD/skill" ~/.codex/skills/domain-search
+```
+
+Claude Code:
+
+```bash
+mkdir -p ~/.claude/skills
+ln -s "$PWD/skill" ~/.claude/skills/domain-search
 ```
 
 The skill uses [`skill/scripts/domain-search.sh`](./skill/scripts/domain-search.sh), which resolves the repo path even when the skill directory is symlinked.
