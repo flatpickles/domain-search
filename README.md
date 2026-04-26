@@ -32,32 +32,6 @@ The skill and CLI need:
 
 If you do not know whether you have those installed, ask Codex or Claude to check your computer for Node.js 22 and `whois`, then install the GitHub skill above.
 
-## Install In Local Skills Folders
-
-Clone directly into a global Codex skills folder:
-
-```bash
-mkdir -p ~/.codex/skills
-git clone https://github.com/flatpickles/domain-search.git ~/.codex/skills/domain-search
-```
-
-Clone directly into a global Claude Code skills folder:
-
-```bash
-mkdir -p ~/.claude/skills
-git clone https://github.com/flatpickles/domain-search.git ~/.claude/skills/domain-search
-```
-
-Or clone somewhere stable and symlink the repo root:
-
-```bash
-git clone https://github.com/flatpickles/domain-search.git /path/to/domain-search
-ln -s /path/to/domain-search ~/.codex/skills/domain-search
-ln -s /path/to/domain-search ~/.claude/skills/domain-search
-```
-
-Restart or reload your agent app if it only scans skills at startup.
-
 ## Use
 
 Ask your agent for domain ideas, shortlist checking, TLD pricing, or `.com`/domain-hack exploration. When no TLD or domain style is specified, the skill keeps the default mixed search path:
@@ -69,7 +43,37 @@ Agents should present mixed results in separate traditional exact domain and dom
 
 Explicit TLD searches can use any TLD in the bundled IANA root-zone snapshot. Registrar metadata prefers Cloudflare where supported, includes per-domain direct registration/search links where available, falls back to Namecheap otherwise, and preserves dedicated registry links where needed.
 
-You can also run the skill launcher directly:
+In Codex, the `auto-review` permission level should be enough for the skill's launcher commands, though live WHOIS/RDAP lookups may still need a one-time approval to access the internet.
+
+## Install In Local Skills Folders
+
+If you already know where your agent app loads local skills from, clone the repository directly into that folder.
+
+```bash
+mkdir -p ~/.codex/skills
+git clone https://github.com/flatpickles/domain-search.git ~/.codex/skills/domain-search
+```
+
+```bash
+mkdir -p ~/.claude/skills
+git clone https://github.com/flatpickles/domain-search.git ~/.claude/skills/domain-search
+```
+
+Or clone somewhere stable and symlink the repo root into each local skills folder:
+
+```bash
+git clone https://github.com/flatpickles/domain-search.git /path/to/domain-search
+ln -s /path/to/domain-search ~/.codex/skills/domain-search
+ln -s /path/to/domain-search ~/.claude/skills/domain-search
+```
+
+Restart or reload your agent app if it only scans skills at startup.
+
+## CLI
+
+The skill is powered by a standalone Node.js CLI in [`cli/`](./cli). See [`cli/README.md`](./cli/README.md) for direct CLI installation and usage.
+
+From a cloned skill repo, technical users can also run the launcher directly. It resolves the real repository root, then runs the CLI from `cli/bin/domain-search.js`, so it works when this repo is symlinked into a local skills folder.
 
 ```bash
 ./domain-search.sh search --words-file ./words.txt --limit 20 --progress-format human
@@ -77,12 +81,4 @@ You can also run the skill launcher directly:
 ./domain-search.sh prices --max-price 20
 ```
 
-## Codex Approval
-
-Live availability checks use WHOIS/RDAP network lookups. Bootstrap RDAP can confirm registered domains, but bootstrap not-found responses are treated as inconclusive unless the TLD has curated availability handling. In Codex, `search` and `check` may ask to run `./domain-search.sh search` or `./domain-search.sh check` outside the sandbox so those lookups can complete.
-
-Approve once for a single run, or choose the "don't ask again" option for those launcher prefixes if you want repeated verified searches without prompts. `generate` can produce unverified ideas without live availability checks.
-
-## CLI
-
-The skill is powered by a standalone Node.js CLI in [`cli/`](./cli). See [`cli/README.md`](./cli/README.md) for direct CLI installation and usage.
+Live availability checks use WHOIS/RDAP network lookups. Bootstrap RDAP can confirm registered domains, but bootstrap not-found responses are treated as inconclusive unless the TLD has curated availability handling. `generate` can produce unverified ideas without live availability checks.
