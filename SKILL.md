@@ -95,6 +95,12 @@ When presenting final checked results, preserve actionable per-domain links. If 
 Otherwise use `registration_url` only when it is a registrar link. Do not collapse available
 domains into generic "Cloudflare Domains" or "Namecheap search" starting points when per-domain
 links are present. If only a generic dashboard or registry page is bundled, say that directly.
+Only link to a registrar when the bundled metadata has positive evidence that registrar supports
+that TLD. Do not assume Namecheap or any other fallback registrar for every delegated root-zone
+TLD. If registrar support is unknown, leave the registrar link blank or use an official registry
+page when one is bundled.
+Treat TLDs with registrant eligibility requirements as lower-priority suggestions. If a restricted
+TLD appears in results, flag the restriction in the response and mention the relevant requirement.
 
 Structured shortlist contract:
 
@@ -173,8 +179,10 @@ Unknown-result fallback:
 - Bundled price data is dated and advisory; the tool should say it may now be out of date.
 - The verification allowlist is the bundled IANA root-zone TLD snapshot, not the smaller pricing list.
 - WHOIS checks can fall back to IANA RDAP bootstrap data for delegated TLDs that do not have custom local RDAP metadata. Bootstrap RDAP can confirm registered domains, but bootstrap 404/not-found responses are treated as inconclusive unless the TLD has curated local RDAP availability handling.
-- Registration links prefer Cloudflare for TLDs in the bundled Cloudflare Registrar support snapshot, use Namecheap as the default fallback, and preserve dedicated registry links for TLDs that need them.
+- Registration links prefer Cloudflare for TLDs in the bundled Cloudflare Registrar support snapshot, use Namecheap only where bundled metadata verifies support for that TLD, and preserve dedicated registry links for TLDs that need them.
 - Result JSON can include both preferred registrar fields and `direct_registration_url`; use `direct_registration_url` for clickable available-domain names because it is the per-domain action link.
+- Do not link to Namecheap, Cloudflare, or any other registrar unless that registrar is explicitly bundled for the TLD; root-zone delegation alone is not registrar support evidence.
+- Restricted TLDs include `registration_restriction` metadata. De-emphasize them in broad searches and surface the restriction when presenting them.
 - Pricing source and registration source are separate; do not assume price metadata implies registrar support.
 - If no reliable bundled registration target is known, report that the registration link is unavailable rather than guessing.
 - If a requested TLD is outside the delegated IANA root-zone set, fail closed and say the tool cannot verify that TLD.

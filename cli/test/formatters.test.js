@@ -278,6 +278,64 @@ test("formatResults distinguishes registry fallback links", () => {
   assert.match(output, /official registry homepage/);
 });
 
+test("formatResults flags restricted TLDs", () => {
+  const output = formatResults({
+    kind: "check",
+    mode: "exact",
+    tlds: ["it"],
+    checked: 1,
+    candidatePool: 1,
+    available: 1,
+    unknown: 0,
+    results: [
+      {
+        word: "falco",
+        domain: "falco.it",
+        description: "A bird genus.",
+        candidate_type: "real_word",
+        registration_provider: "Registro .it",
+        registration_kind: "registry_homepage",
+        registration_url: "https://www.nic.it/en",
+        registration_restriction: {
+          summary: "Registrant must be eligible under Registro .it rules",
+          source_name: "Registro .it",
+          source_url: "https://www.nic.it/en/find-your-it/how-register",
+        },
+      },
+    ],
+  });
+
+  assert.match(output, /Registration restriction: Registrant must be eligible under Registro \.it rules\./);
+  assert.match(output, /Source: \[Registro \.it\]/);
+});
+
+test("formatResults only links domain labels to per-domain registration URLs", () => {
+  const output = formatResults({
+    kind: "check",
+    mode: "hack",
+    tlds: ["ren"],
+    checked: 1,
+    candidatePool: 1,
+    available: 1,
+    unknown: 0,
+    results: [
+      {
+        word: "wren",
+        domain: "w.ren",
+        description: "A bird.",
+        candidate_type: "real_word",
+        registration_provider: "101domain",
+        registration_kind: "registrar_tld_page",
+        registration_url: "https://www.101domain.com/ren.htm",
+      },
+    ],
+  });
+
+  assert.match(output, /- `w\.ren` from/);
+  assert.doesNotMatch(output, /\[`w\.ren`\]/);
+  assert.match(output, /Register via \[101domain\]/);
+});
+
 test("formatResults emits json when requested", () => {
   const output = formatResults({
     kind: "prices",

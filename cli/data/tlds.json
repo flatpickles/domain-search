@@ -73,7 +73,14 @@
         "source_url": "https://www.namecheap.com/domains/registration/results/",
         "verified_at": "2026-03-29"
       }
-    ]
+    ],
+    "registration_restriction": {
+      "level": "restricted",
+      "summary": "Registrant must satisfy CIRA Canadian Presence Requirements",
+      "source_name": "CIRA Canadian Presence Requirements",
+      "source_url": "https://www.cira.ca/en/resources/documents/domains/canadian-presence-requirements-registrants/",
+      "verified_at": "2026-04-26"
+    }
   },
   {
     "tld": "co",
@@ -187,7 +194,14 @@
         "source_url": "https://www.namecheap.com/domains/registration/results/",
         "verified_at": "2026-03-29"
       }
-    ]
+    ],
+    "registration_restriction": {
+      "level": "restricted",
+      "summary": "Registrant must be an eligible EU, Iceland, Liechtenstein, or Norway citizen, resident, undertaking, or organisation",
+      "source_name": "EURid rules for .eu domains",
+      "source_url": "https://eurid.eu/en/knowledge-centre/rules-for-eu-domains/",
+      "verified_at": "2026-04-26"
+    }
   },
   {
     "tld": "in",
@@ -233,8 +247,8 @@
     "price_updated_at": "2026-03-29",
     "price_source_name": "Namecheap full TLD list",
     "price_source_url": "https://www.namecheap.com/domains/full-tld-list/",
-    "preferred_registration_provider": "Namecheap",
-    "fallback_registration_provider": "Namecheap",
+    "preferred_registration_provider": "ISNIC",
+    "fallback_registration_provider": null,
     "registration_options": [
       {
         "provider": "ISNIC",
@@ -252,8 +266,8 @@
     "price_updated_at": "2026-03-29",
     "price_source_name": "Namecheap full TLD list",
     "price_source_url": "https://www.namecheap.com/domains/full-tld-list/",
-    "preferred_registration_provider": "Namecheap",
-    "fallback_registration_provider": "Namecheap",
+    "preferred_registration_provider": "Registro .it",
+    "fallback_registration_provider": null,
     "registration_options": [
       {
         "provider": "Registro .it",
@@ -263,7 +277,14 @@
         "source_url": "https://www.nic.it/en",
         "verified_at": "2026-03-29"
       }
-    ]
+    ],
+    "registration_restriction": {
+      "level": "restricted",
+      "summary": "Registrant must be an adult with citizenship, residence, or commercial headquarters in the EEA, Vatican City, San Marino, Switzerland, or the United Kingdom",
+      "source_name": "Registro .it registration rules",
+      "source_url": "https://www.nic.it/en/find-your-it/how-register",
+      "verified_at": "2026-04-26"
+    }
   },
   {
     "tld": "me",
@@ -347,8 +368,8 @@
     "price_updated_at": "2026-03-29",
     "price_source_name": "Namecheap full TLD list",
     "price_source_url": "https://www.namecheap.com/domains/full-tld-list/",
-    "preferred_registration_provider": "Namecheap",
-    "fallback_registration_provider": "Namecheap",
+    "preferred_registration_provider": "DNS.PT",
+    "fallback_registration_provider": null,
     "registration_options": [
       {
         "provider": "DNS.PT",
@@ -366,8 +387,8 @@
     "price_updated_at": "2026-03-29",
     "price_source_name": "Namecheap full TLD list",
     "price_source_url": "https://www.namecheap.com/domains/full-tld-list/",
-    "preferred_registration_provider": "Namecheap",
-    "fallback_registration_provider": "Namecheap",
+    "preferred_registration_provider": "AFNIC .RE",
+    "fallback_registration_provider": null,
     "registration_options": [
       {
         "provider": "AFNIC .RE",
@@ -377,6 +398,40 @@
         "source_url": "https://www.afnic.fr/en/products-and-services/french-overseas-cctlds/re-the-internet-of-reunion/",
         "verified_at": "2026-03-29"
       }
+    ],
+    "registration_restriction": {
+      "level": "restricted",
+      "summary": "Registrant must reside or be established in the EU, Iceland, Liechtenstein, Norway, or Switzerland under AFNIC eligibility rules",
+      "source_name": "AFNIC eligibility rules",
+      "source_url": "https://www.afnic.fr/en/observatory-and-resources/expert-papers/brexit-and-fr-domain-names/",
+      "verified_at": "2026-04-26"
+    }
+  },
+  {
+    "tld": "ren",
+    "annual_price_usd": 20.99,
+    "price_updated_at": "2026-04-26",
+    "price_source_name": "101domain .ren technical information",
+    "price_source_url": "https://www.101domain.com/ren.htm",
+    "preferred_registration_provider": "101domain",
+    "fallback_registration_provider": null,
+    "registration_options": [
+      {
+        "provider": "101domain",
+        "kind": "registrar_tld_page",
+        "url": "https://www.101domain.com/ren.htm",
+        "source_name": "101domain .ren domain names",
+        "source_url": "https://www.101domain.com/ren.htm",
+        "verified_at": "2026-04-26"
+      },
+      {
+        "provider": "ZDNS .REN",
+        "kind": "registry_homepage",
+        "url": "http://nic.ren/",
+        "source_name": "IANA .REN delegation record",
+        "source_url": "https://www.iana.org/domains/root/db/ren.html",
+        "verified_at": "2026-04-26"
+      }
     ]
   },
   {
@@ -385,8 +440,8 @@
     "price_updated_at": "2026-03-29",
     "price_source_name": "Namecheap full TLD list",
     "price_source_url": "https://www.namecheap.com/domains/full-tld-list/",
-    "preferred_registration_provider": "Namecheap",
-    "fallback_registration_provider": "Namecheap",
+    "preferred_registration_provider": "Internetstiftelsen",
+    "fallback_registration_provider": null,
     "registration_options": [
       {
         "provider": "Internetstiftelsen",
@@ -404,8 +459,8 @@
     "price_updated_at": "2026-03-29",
     "price_source_name": "Namecheap full TLD list",
     "price_source_url": "https://www.namecheap.com/domains/full-tld-list/",
-    "preferred_registration_provider": "Namecheap",
-    "fallback_registration_provider": "Namecheap",
+    "preferred_registration_provider": "SH Registry",
+    "fallback_registration_provider": null,
     "registration_options": [
       {
         "provider": "SH Registry",
@@ -423,8 +478,8 @@
     "price_updated_at": "2026-03-29",
     "price_source_name": "Namecheap full TLD list",
     "price_source_url": "https://www.namecheap.com/domains/full-tld-list/",
-    "preferred_registration_provider": "Namecheap",
-    "fallback_registration_provider": "Namecheap",
+    "preferred_registration_provider": "ST Registry",
+    "fallback_registration_provider": null,
     "registration_options": [
       {
         "provider": "ST Registry",
@@ -453,7 +508,14 @@
         "source_url": "https://www.namecheap.com/domains/registration/results/",
         "verified_at": "2026-03-29"
       }
-    ]
+    ],
+    "registration_restriction": {
+      "level": "restricted",
+      "summary": "Registrant must satisfy the usTLD Nexus requirement for a bona fide presence in the United States",
+      "source_name": "usTLD Nexus Requirements Policy",
+      "source_url": "https://www.cdn.neustar/resources/ebooks/policies/usTLD_Nexus_Requirements_Policy.pdf",
+      "verified_at": "2026-04-26"
+    }
   },
   {
     "tld": "xyz",

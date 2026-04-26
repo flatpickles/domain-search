@@ -33,9 +33,19 @@ function isRegisteredResult(item) {
 }
 
 function formatDomainLabel(item, isRegistrarLink) {
-  const directUrl = item.direct_registration_url || (isRegistrarLink ? item.registration_url : null);
-  const actionUrl = !isRegisteredResult(item) ? directUrl : null;
+  const actionUrl = !isRegisteredResult(item) ? item.direct_registration_url : null;
   return actionUrl ? `[\`${item.domain}\`](${actionUrl})` : `\`${item.domain}\``;
+}
+
+function formatRegistrationRestriction(item) {
+  const restriction = item.registration_restriction;
+  if (!restriction) return "";
+
+  const summary = restriction.summary || item.registration_restriction_note || "Registrant eligibility requirements apply.";
+  const source = restriction.source_url
+    ? ` Source: [${restriction.source_name || "registry policy"}](${restriction.source_url}).`
+    : "";
+  return ` Registration restriction: ${summary}${summary.endsWith(".") ? "" : "."}${source}`;
 }
 
 function formatGenerateMarkdown(summary) {
@@ -100,8 +110,9 @@ function formatResultLine(item) {
   const price = item.price !== null && item.price !== undefined ? ` Renewal: $${item.price}/year.` : "";
   const typeLabel = item.candidate_type === "brandable" ? "brandable" : "real-word";
   const verificationHint = item.verification_hint ? ` ${item.verification_hint}` : "";
+  const restriction = formatRegistrationRestriction(item);
 
-  return `- ${domainLabel} from ${sourceLink}: ${description} (${typeLabel}).${price}${directRegistration}${registration}${fallbackRegistration}${registrationNote}${verificationHint}`;
+  return `- ${domainLabel} from ${sourceLink}: ${description} (${typeLabel}).${price}${restriction}${directRegistration}${registration}${fallbackRegistration}${registrationNote}${verificationHint}`;
 }
 
 function formatGroupedResults(lines, title, items) {
@@ -220,8 +231,11 @@ function formatPricesMarkdown(summary) {
     const registrationSummary = registrationOption
       ? `${registrationOption.provider} (${registrationOption.kind})`
       : "none bundled";
+    const restriction = item.registration_restriction
+      ? ` Restricted: ${item.registration_restriction.summary}`
+      : "";
     lines.push(
-      `- \`.${item.tld}\`: ${price}/year via ${item.price_source_name || "unknown source"}. Preferred registrar: ${item.preferred_registration_provider || "unknown"}. Actionable registration target: ${registrationSummary}.`,
+      `- \`.${item.tld}\`: ${price}/year via ${item.price_source_name || "unknown source"}. Preferred registrar: ${item.preferred_registration_provider || "unknown"}. Actionable registration target: ${registrationSummary}.${restriction}`,
     );
   }
 

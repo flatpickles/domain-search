@@ -3,6 +3,7 @@ const {
   DEFAULT_HACK_TLDS,
 } = require("./constants");
 const { normalizeTlds } = require("./tlds");
+const { getTldScoreAdjustment } = require("./tld-metadata");
 const { buildWordSet, isKnownWord, normalizeAlphaWord } = require("./words");
 
 const BLOCKED_CORPORATE_SOURCE_WORDS = new Set(["company", "corp", "inc", "llc", "ltd"]);
@@ -73,6 +74,24 @@ function scoreBrandable(term) {
   if (/(rr|lyly|shly|zr|xr)$/.test(term)) score -= 10;
   if (/(.)\1$/.test(term)) score -= 8;
   return score;
+}
+
+function applyTldScorePolicy(candidate, options = {}) {
+  if (candidate.tld_score_adjustment !== undefined) return candidate;
+
+  const adjustment = getTldScoreAdjustment(candidate.tld, options);
+  if (!adjustment) {
+    return {
+      ...candidate,
+      tld_score_adjustment: 0,
+    };
+  }
+
+  return {
+    ...candidate,
+    score: (candidate.score ?? 0) + adjustment,
+    tld_score_adjustment: adjustment,
+  };
 }
 
 function hasBlockedCorporateTail(label) {
@@ -285,10 +304,11 @@ function generateHackCandidates(words, options = {}) {
           domain,
           score: scoreHack(variation.joined_word, variation.label, tld),
         };
-        if (!isCandidateLabelAllowed(candidate, { sourceWordSet })) continue;
+        const scoredCandidate = applyTldScorePolicy(candidate, options);
+        if (!isCandidateLabelAllowed(scoredCandidate, { sourceWordSet })) continue;
         const previous = bestByDomain.get(domain);
-        if (!previous || candidate.score > previous.score) {
-          bestByDomain.set(domain, candidate);
+        if (!previous || scoredCandidate.score > previous.score) {
+          bestByDomain.set(domain, scoredCandidate);
         }
       }
     }
@@ -307,15 +327,20 @@ function generateExactCandidates(words, options = {}) {
 
   return words
     .flatMap((word) =>
-      tlds.map((tld) => ({
-        mode: "exact",
-        domain_shape: "exact",
-        word,
-        domain: `${word}.${tld}`,
-        label: word,
-        tld,
-        score: scoreExact(word),
-      })),
+      tlds.map((tld) =>
+        applyTldScorePolicy(
+          {
+            mode: "exact",
+            domain_shape: "exact",
+            word,
+            domain: `${word}.${tld}`,
+            label: word,
+            tld,
+            score: scoreExact(word),
+          },
+          options,
+        ),
+      ),
     )
     .filter((candidate) => isCandidateLabelAllowed(candidate))
     .filter((candidate) => candidate.score >= threshold)
@@ -323,6 +348,7 @@ function generateExactCandidates(words, options = {}) {
 }
 
 module.exports = {
+  applyTldScorePolicy,
   generateExactCandidates,
   generateBrandableCandidates,
   generateHackCandidates,

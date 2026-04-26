@@ -4,11 +4,15 @@ const { isKnownRootTld, normalizeTld } = require("./tlds");
 
 const CLOUDFLARE_TLDS_PATH = path.join(__dirname, "..", "data", "cloudflare-tlds.txt");
 const CLOUDFLARE_VERIFIED_AT = "2026-04-25";
-const NAMECHEAP_VERIFIED_AT = "2026-03-29";
 const DEDICATED_REGISTRATION_KINDS = new Set([
   "dedicated_registrar",
   "registry_homepage",
   "registry_register",
+]);
+const REGISTRAR_REGISTRATION_KINDS = new Set([
+  "registrar_register",
+  "registrar_search",
+  "registrar_tld_page",
 ]);
 
 let cachedCloudflareTlds = null;
@@ -44,19 +48,27 @@ function buildCloudflareOption() {
   };
 }
 
-function buildNamecheapOption() {
-  return {
-    provider: "Namecheap",
-    kind: "registrar_search",
-    url_template: "https://www.namecheap.com/domains/registration/results/?domain={domain}",
-    source_name: "Namecheap domain search",
-    source_url: "https://www.namecheap.com/domains/registration/results/",
-    verified_at: NAMECHEAP_VERIFIED_AT,
-  };
-}
-
 function isDedicatedRegistrationOption(option) {
   return option && DEDICATED_REGISTRATION_KINDS.has(option.kind);
+}
+
+function isRegistrarRegistrationOption(option) {
+  return option && REGISTRAR_REGISTRATION_KINDS.has(option.kind);
+}
+
+function dedupeRegistrationOptions(options) {
+  const seen = new Set();
+  const deduped = [];
+
+  for (const option of options) {
+    if (!option) continue;
+    const key = `${option.provider || ""}:${option.kind || ""}:${option.url || option.url_template || ""}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    deduped.push(option);
+  }
+
+  return deduped;
 }
 
 function resolveRegistrarMetadata(entry = {}) {
@@ -71,11 +83,26 @@ function resolveRegistrarMetadata(entry = {}) {
   }
 
   const dedicatedOptions = existingOptions.filter(isDedicatedRegistrationOption);
+  const registrarOptions = existingOptions.filter(isRegistrarRegistrationOption);
   const requiresDedicatedRegistrar = Boolean(entry.requires_dedicated_registrar);
   const cloudflareSupported = isCloudflareSupportedTld(tld);
 
-  if (requiresDedicatedRegistrar || (dedicatedOptions.length > 0 && !cloudflareSupported)) {
-    const preferredOption = dedicatedOptions[0] || existingOptions[0] || null;
+  if (cloudflareSupported) {
+    const options = dedupeRegistrationOptions([
+      buildCloudflareOption(),
+      ...registrarOptions,
+      ...dedicatedOptions,
+    ]);
+    const fallbackRegistrar = registrarOptions.find((option) => option.provider !== "Cloudflare") || null;
+    return {
+      preferred_registration_provider: "Cloudflare",
+      fallback_registration_provider: fallbackRegistrar?.provider || null,
+      registration_options: options,
+    };
+  }
+
+  if (requiresDedicatedRegistrar) {
+    const preferredOption = dedicatedOptions[0] || registrarOptions[0] || existingOptions[0] || null;
     return {
       preferred_registration_provider: preferredOption?.provider || entry.preferred_registration_provider || null,
       fallback_registration_provider: null,
@@ -83,21 +110,29 @@ function resolveRegistrarMetadata(entry = {}) {
     };
   }
 
-  if (cloudflareSupported) {
+  if (registrarOptions.length > 0) {
+    const preferredOption = registrarOptions[0];
+    const fallbackOption = registrarOptions.find((option) => option.provider !== preferredOption.provider) || null;
     return {
-      preferred_registration_provider: "Cloudflare",
-      fallback_registration_provider: "Namecheap",
-      registration_options: [
-        buildCloudflareOption(),
-        buildNamecheapOption(),
-      ],
+      preferred_registration_provider: preferredOption.provider,
+      fallback_registration_provider: fallbackOption?.provider || null,
+      registration_options: dedupeRegistrationOptions([...registrarOptions, ...dedicatedOptions]),
+    };
+  }
+
+  if (dedicatedOptions.length > 0) {
+    const preferredOption = dedicatedOptions[0];
+    return {
+      preferred_registration_provider: preferredOption.provider,
+      fallback_registration_provider: null,
+      registration_options: dedicatedOptions,
     };
   }
 
   return {
-    preferred_registration_provider: "Namecheap",
-    fallback_registration_provider: "Namecheap",
-    registration_options: [buildNamecheapOption()],
+    preferred_registration_provider: null,
+    fallback_registration_provider: null,
+    registration_options: existingOptions,
   };
 }
 

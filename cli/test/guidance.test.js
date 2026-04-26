@@ -50,6 +50,21 @@ test("guidance treats TLD-shape requests as exact-domain baselines", () => {
   assert.match(readme, /"four-letter bird names with a two-letter TLD" means full labels like `ibis\.xx`/);
 });
 
+test("guidance requires evidence-backed registrar links and restricted-TLD warnings", () => {
+  const skill = read(skillPath);
+  const prompt = read(agentPromptPath);
+  const readme = read(readmePath);
+  const cliReadme = read(cliReadmePath);
+
+  assert.match(skill, /Only link to a registrar when the bundled metadata has positive evidence that registrar supports/);
+  assert.match(skill, /Do not assume Namecheap or any other fallback registrar for every delegated root-zone/);
+  assert.match(skill, /Treat TLDs with registrant eligibility requirements as lower-priority suggestions/);
+  assert.match(prompt, /uses Namecheap only where bundled metadata verifies support for that TLD/);
+  assert.match(prompt, /when a result includes registration_restriction, flag that requirement/);
+  assert.match(readme, /unsupported root-zone TLDs do not get generic Namecheap links/);
+  assert.match(cliReadme, /`registration_restriction` when a TLD has known registrant eligibility requirements/);
+});
+
 test("root README documents skill-first install and mixed-by-default agent usage", () => {
   const readme = read(readmePath);
 

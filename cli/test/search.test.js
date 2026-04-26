@@ -280,11 +280,30 @@ test("checkCandidates supports delegated root-zone TLDs without bundled pricing"
   assert.equal(summary.results[0].price, null);
   assert.equal(summary.results[0].registration_provider, "Cloudflare");
   assert.equal(summary.results[0].registration_kind, "registrar_register");
-  assert.equal(summary.results[0].fallback_registration_provider, "Namecheap");
-  assert.equal(summary.results[0].direct_registration_provider, "Namecheap");
-  assert.match(summary.results[0].direct_registration_url, /namecheap\.com/);
-  assert.match(summary.results[0].fallback_registration_url, /namecheap\.com/);
+  assert.equal(summary.results[0].fallback_registration_provider, null);
+  assert.equal(summary.results[0].direct_registration_provider, null);
+  assert.equal(summary.results[0].direct_registration_url, null);
+  assert.equal(summary.results[0].fallback_registration_url, null);
   assert.match(summary.results[0].registration_url, /dash\.cloudflare\.com/);
+});
+
+test("checkCandidates uses verified .ren registrar metadata without Namecheap fallback", async () => {
+  const summary = await checkCandidates({
+    candidates: ["w.ren"],
+    progressFormat: "silent",
+    checkDomainFn: async (domain) => ({
+      domain,
+      status: "AVAILABLE",
+    }),
+  });
+
+  assert.equal(summary.results[0].domain, "w.ren");
+  assert.equal(summary.results[0].registration_provider, "101domain");
+  assert.equal(summary.results[0].registration_kind, "registrar_tld_page");
+  assert.match(summary.results[0].registration_url, /101domain\.com\/ren\.htm/);
+  assert.equal(summary.results[0].fallback_registration_provider, null);
+  assert.equal(summary.results[0].direct_registration_provider, null);
+  assert.equal(summary.results[0].direct_registration_url, null);
 });
 
 test("checkCandidates normalizes IDN TLDs to root-zone A-labels", async () => {
@@ -512,6 +531,26 @@ test("searchDomains keeps whole-word hack candidates while dropping weak ones", 
   assert.ok(!summary.results.some((item) => item.domain === "steady.st"));
 });
 
+test("restricted TLDs are de-emphasized in generated rankings", () => {
+  const unrestricted = generateCandidates({
+    mode: "hack",
+    tlds: ["re"],
+    words: ["store"],
+    maxDomainLength: 20,
+    emitLimit: 1,
+  });
+  const deemphasized = generateCandidates({
+    mode: "hack",
+    words: ["store"],
+    maxDomainLength: 20,
+    emitLimit: 1,
+    sourceWordSet: new Set(["store"]),
+  });
+
+  assert.equal(unrestricted.candidates[0].domain, "sto.re");
+  assert.ok(!deemphasized.candidates.some((item) => item.domain === "sto.re"));
+});
+
 test("getTldPricing can return explicit unknown TLD placeholders", () => {
   const pricing = getTldPricing({ tlds: ["madeup"] });
   assert.equal(pricing.items[0].tld, "madeup");
@@ -542,13 +581,41 @@ test("Cloudflare-supported TLDs prefer Cloudflare with Namecheap fallback", () =
   assert.equal(item.registration_options[0].kind, "registrar_register");
 });
 
-test("non-Cloudflare root-zone TLDs fall back to Namecheap", () => {
+test("metadata-backed non-Cloudflare root-zone TLDs use bundled registrar evidence", () => {
   const pricing = getTldPricing({ tlds: ["de"] });
   const item = pricing.items[0];
 
   assert.equal(item.preferred_registration_provider, "Namecheap");
   assert.equal(item.registration_options[0].provider, "Namecheap");
   assert.equal(item.registration_options[0].kind, "registrar_search");
+});
+
+test("root-zone TLDs without registrar evidence do not get synthetic Namecheap links", () => {
+  const pricing = getTldPricing({ tlds: ["read"] });
+  const item = pricing.items[0];
+
+  assert.equal(item.preferred_registration_provider, null);
+  assert.equal(item.fallback_registration_provider, null);
+  assert.deepEqual(item.registration_options, []);
+});
+
+test(".ren uses verified 101domain and registry metadata", () => {
+  const pricing = getTldPricing({ tlds: ["ren"] });
+  const item = pricing.items[0];
+
+  assert.equal(item.preferred_registration_provider, "101domain");
+  assert.equal(item.fallback_registration_provider, null);
+  assert.equal(item.registration_options[0].provider, "101domain");
+  assert.equal(item.registration_options[0].kind, "registrar_tld_page");
+  assert.equal(item.registration_options[1].provider, "ZDNS .REN");
+});
+
+test("restricted TLD metadata is exposed in pricing", () => {
+  const pricing = getTldPricing({ tlds: ["ca", "eu", "it", "re", "us"] });
+
+  assert.ok(pricing.items.every((item) => item.registration_restriction?.level === "restricted"));
+  assert.match(pricing.items.find((item) => item.tld === "ca").registration_restriction.summary, /CIRA/);
+  assert.match(pricing.items.find((item) => item.tld === "us").registration_restriction.summary, /Nexus/);
 });
 
 test("getTldPricing exposes broader hack-friendly price coverage under a max price", () => {
@@ -578,5 +645,6 @@ test("Cloudflare support overrides generic registry homepage metadata", () => {
 
   assert.equal(item.preferred_registration_provider, "Cloudflare");
   assert.equal(item.registration_options[0].provider, "Cloudflare");
-  assert.equal(item.registration_options[1].provider, "Namecheap");
+  assert.equal(item.registration_options[1].provider, "SH Registry");
+  assert.ok(!item.registration_options.some((option) => option.provider === "Namecheap"));
 });

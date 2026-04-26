@@ -4,7 +4,7 @@
 
 The CLI enriches results with WHOIS/RDAP availability, bundled TLD pricing, registrar metadata, per-domain direct registration/search links where available, and optional descriptions. Verification accepts any TLD in the bundled IANA root-zone snapshot. Bootstrap RDAP can confirm registered domains, but bootstrap not-found responses are inconclusive unless the TLD has curated availability handling.
 
-Registrar metadata prefers Cloudflare for TLDs in the bundled Cloudflare Registrar support snapshot, uses Namecheap as the default fallback for other public root-zone TLDs, and preserves dedicated registry links for TLDs that need them. Checked result JSON includes `direct_registration_url` when the tool has a domain-specific action link.
+Registrar metadata prefers Cloudflare for TLDs in the bundled Cloudflare Registrar support snapshot, uses Namecheap only for TLDs with bundled support evidence, and preserves dedicated registry links for TLDs that need them. Checked result JSON includes `direct_registration_url` when the tool has a domain-specific action link, and `registration_restriction` when a TLD has known registrant eligibility requirements.
 
 ## Install
 

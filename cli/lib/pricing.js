@@ -10,6 +10,11 @@ function buildPriceNote(entry) {
   return `Bundled pricing was updated as of ${entry.price_updated_at} from ${entry.price_source_name} and may now be out of date.`;
 }
 
+function buildRestrictionNote(restriction) {
+  if (!restriction) return null;
+  return restriction.summary || "This TLD has registrant eligibility requirements.";
+}
+
 function createPlaceholderEntry(tld) {
   return {
     tld,
@@ -105,7 +110,7 @@ function renderRegistrationUrl(option, domain) {
 }
 
 function findDirectRegistrationOption(options) {
-  return options.find((option) => option?.url_template) || null;
+  return options.find((option) => option?.url_template && option.kind?.startsWith("registrar_")) || null;
 }
 
 function buildRegistrationNote(option) {
@@ -119,6 +124,10 @@ function buildRegistrationNote(option) {
 
   if (option.kind === "registry_register") {
     return "No verified registrar search link is bundled for this TLD; using the official registry registration page.";
+  }
+
+  if (option.kind === "registrar_tld_page") {
+    return "No per-domain registration link is bundled for this TLD; using a verified registrar TLD page.";
   }
 
   return null;
@@ -176,6 +185,8 @@ function enrichWithPricing(candidate) {
         }
       : null,
     price_note: buildPriceNote(entry),
+    registration_restriction: entry?.registration_restriction || null,
+    registration_restriction_note: buildRestrictionNote(entry?.registration_restriction),
   };
 }
 

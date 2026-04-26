@@ -1,4 +1,5 @@
 const {
+  applyTldScorePolicy,
   generateBrandableCandidates,
   generateExactCandidates,
   generateHackCandidates,
@@ -291,6 +292,7 @@ function resolveGenerateOptions(options = {}) {
     emitLimit,
     sourceWordSet: options.sourceWordSet || null,
     trustSourceWordsForHackValidation: Boolean(options.trustSourceWordsForHackValidation || options.wordsFile),
+    deemphasizeRestrictedTlds: !options.tlds,
   };
 }
 
@@ -494,6 +496,11 @@ async function evaluateCandidates(options = {}) {
   const candidateIndexOffset = Number(options.candidateIndexOffset ?? 0);
   const normalizedCandidates = (options.candidates || [])
     .map((candidate) => normalizeCandidate(candidate, fallbackMode))
+    .map((candidate) =>
+      applyTldScorePolicy(candidate, {
+        deemphasizeRestrictedTlds: options.deemphasizeRestrictedTlds !== false && !options.tlds,
+      }),
+    )
     .filter((candidate) => isCandidateLabelAllowed(candidate));
   assertSupportedVerificationTlds(
     normalizedCandidates.map((candidate) => candidate.tld).filter(Boolean),
