@@ -41,6 +41,8 @@ Ask your agent for domain ideas, shortlist checking, TLD pricing, or `.com`/doma
 
 Agents should present mixed results in separate traditional exact domain and domain hack groups when both are available.
 
+Requests that constrain TLD length or shape are exact-domain searches unless the user says they want domain hacks. For example, "four-letter bird names with a two-letter TLD" means full labels like `ibis.xx`, with split forms like `ib.is` only as a clearly labeled extra.
+
 Explicit TLD searches can use any TLD in the bundled IANA root-zone snapshot. Registrar metadata prefers Cloudflare where supported, includes per-domain direct registration/search links where available, falls back to Namecheap otherwise, and preserves dedicated registry links where needed.
 
 In Codex, the `auto-review` permission level should be enough for the skill's launcher commands, though live WHOIS/RDAP lookups may still need a one-time approval to access the internet.

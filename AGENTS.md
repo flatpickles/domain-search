@@ -15,6 +15,7 @@ Domain-search behavior to preserve:
 - Use `generate` only when an intermediate filtering step is needed.
 - Use `check` for user-provided or deliberately curated shortlists.
 - Without `--mode`, `--tlds`, `--all`, or `--max-price`, preserve the mixed default: traditional `.com` domains plus true whole-word domain hacks.
+- Treat TLD-length or TLD-shape constraints as exact-domain searches unless the user explicitly asks for domain hacks. For example, "four-letter bird names with a two-letter TLD" means full labels like `ibis.xx`, not split hacks like `ib.is`.
 - In mixed-mode responses, keep traditional exact domains and domain hacks visible as separate groups when both are available.
 - Treat a domain hack as valid only when the label plus TLD reads as one ordinary word. Do not pad weak result sets with phrase-like hacks, arbitrary suffix domains, or coined non-`.com` alternatives.
 - Use `--mode exact` for traditional `.com` domains only.

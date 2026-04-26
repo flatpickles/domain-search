@@ -37,6 +37,19 @@ test("agent prompt describes explicit overrides and split mixed-mode output", ()
   assert.match(prompt, /present the final answer in two sections: traditional exact domains and domain hacks/);
 });
 
+test("guidance treats TLD-shape requests as exact-domain baselines", () => {
+  const skill = read(skillPath);
+  const prompt = read(agentPromptPath);
+  const readme = read(readmePath);
+
+  assert.match(skill, /Treat TLD-length or TLD-shape requests as exact-domain constraints, not domain-hack requests\./);
+  assert.match(skill, /`ibis\.xx` or `swan\.xx`, not `ib\.is` or `sw\.an`/);
+  assert.match(skill, /A prompt like "four-letter bird names with a two-letter TLD" means exact domains like `ibis\.xx`, not `ib\.is`/);
+  assert.match(prompt, /Treat TLD-shape requests such as two-letter TLD, N-letter TLD, or ccTLD as exact-domain constraints/);
+  assert.match(prompt, /check full labels such as ibis\.xx before any optional bonus hacks such as ib\.is/);
+  assert.match(readme, /"four-letter bird names with a two-letter TLD" means full labels like `ibis\.xx`/);
+});
+
 test("root README documents skill-first install and mixed-by-default agent usage", () => {
   const readme = read(readmePath);
 

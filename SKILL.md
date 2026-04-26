@@ -14,6 +14,8 @@ This skill is intentionally tool-like. It does not encode themes, vibes, or sema
 
 Only override that mixed default when the user explicitly asks for a constraint such as `.com` only, one specific TLD, or domain hacks only.
 
+Treat TLD-length or TLD-shape requests as exact-domain constraints, not domain-hack requests. If the user asks for words or names "with a two-letter TLD", "with an N-letter TLD", "on a ccTLD", or similar, keep the whole requested word or name as the second-level label and use matching TLDs: `ibis.xx` or `swan.xx`, not `ib.is` or `sw.an`. Build the explicit TLD set for that shape and run exact checking/searching with `--mode exact --tlds ...`, or check a deliberate shortlist of exact domains. Only include split-across-the-dot hacks for these prompts when the user explicitly asks for domain hacks, split-dot forms, or as a clearly labeled bonus section after the exact-domain baseline.
+
 Use `--mode brandable` when the user explicitly wants shorter brandable `.com` ideas from a supplied source list.
 Do not hand-build exploratory shortlist names that just append corporate filler like `co`, `company`, `corp`, `inc`, `llc`, or `ltd` to force availability.
 
@@ -128,6 +130,7 @@ Do not run an automatic wider follow-up check when a search stops early; summari
 Do not hand-build arbitrary non-`.com` domains and call them hacks.
 When the user did not explicitly ask for a TLD, do not invent non-`.com` exact domains or coined non-`.com` brandables like `steady.st`, `equilia.in`, or `steadia.in`.
 For open-ended unspecified-TLD discovery, use `search` and keep the result space to `.com` exact domains plus true whole-word hacks.
+For TLD-shape requests, do the exact-domain pass first. A prompt like "four-letter bird names with a two-letter TLD" means exact domains like `ibis.xx`, not `ib.is`; hacks can be an optional extra only after that baseline.
 For hack output, the label plus the TLD must read as a single ordinary word, for example `truck.in` -> `truckin`.
 Do not relax this into a phrase, sentence fragment, or multiple-word reading. Reject examples like `tune.me`, `level.ed`, or `driftless.in` when the joined reading is not one real word.
 Reject splits like `trucks.in`, `steady.st`, or `anchor.st` when the join does not read as a real full-word hack.
@@ -155,6 +158,7 @@ Unknown-result fallback:
 - For open-ended discovery without an explicit TLD, if the valid full-word hack pool is thin, say that directly and return a short list rather than filling space with junk.
 - Do not use external `jq` trimming/ranking unless the user explicitly wants custom post-processing.
 - Without `--mode`, `--tlds`, `--all`, or `--max-price`, the default is a mixed search: `.com` plus a curated whole-word domain-hack set.
+- TLD-length or TLD-shape constraints are explicit exact-domain constraints. Use full labels under matching TLDs first, not `2+2` or other split hacks.
 - Use `--mode brandable` only with explicit source words; it does not fall back to the bundled dictionary and it emits `.com` candidates only in v1.
 - Do not force availability with filler endings like `co` or `company`; prefer broader source words, explicit `--mode brandable`, or a deliberate shortlisted `check` pass.
 - With `--limit`, mixed-mode `search` and mixed-shape `check` apply built-in soft balancing so the final shortlist keeps some traditional and some creative results when both are available.
