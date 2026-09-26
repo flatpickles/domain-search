@@ -78,7 +78,7 @@ function formatGenerateMarkdown(summary) {
 }
 
 function formatResultLine(item) {
-  const description = item.description || "Description unavailable.";
+  const description = item.rationale || item.description || "Description unavailable.";
   const sourceLabel = item.word || item.input || item.label || item.domain;
   const sourceLink =
     item.description_source === "wiktionary" || item.description_source === "dictionaryapi"
@@ -111,8 +111,9 @@ function formatResultLine(item) {
   const typeLabel = item.candidate_type === "brandable" ? "brandable" : "real-word";
   const verificationHint = item.verification_hint ? ` ${item.verification_hint}` : "";
   const restriction = formatRegistrationRestriction(item);
+  const eligibility = item.eligibility?.status === "ineligible" ? ` Profile eligibility: ineligible — ${item.eligibility.summary}` : "";
 
-  return `- ${domainLabel} from ${sourceLink}: ${description} (${typeLabel}).${price}${restriction}${directRegistration}${registration}${fallbackRegistration}${registrationNote}${verificationHint}`;
+  return `- ${domainLabel} from ${sourceLink}: ${description} (${typeLabel}).${price}${restriction}${eligibility}${directRegistration}${registration}${fallbackRegistration}${registrationNote}${verificationHint}`;
 }
 
 function formatGroupedResults(lines, title, items) {

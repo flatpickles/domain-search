@@ -21,6 +21,7 @@ const { buildWordSet, loadWords, normalizeAlphaWord, normalizeWords } = require(
 const { checkDomain, getDomainTld, normalizeDomain, validateDomain } = require("./whois");
 
 const { loadSourceContext, applySourceContext } = require("./sources");
+const { domainParts } = require("./namespaces");
 const { loadEligibility, assessEligibility } = require("./eligibility");
 const DEFAULT_SEARCH_LIMIT = 20;
 
@@ -130,7 +131,7 @@ function getVerificationMetadata(status) {
 
   return {
     verification_status: "unknown_needs_registrar_check",
-    verification_hint: "WHOIS inconclusive; verify on registrar before recommending purchase.",
+    verification_hint: "Registry lookup inconclusive; verify on registrar before recommending purchase.",
   };
 }
 
@@ -408,8 +409,9 @@ function normalizeProvidedCandidate(candidate, fallbackMode = "exact") {
   if (typeof candidate === "string") {
     const trimmed = candidate.trim();
     const domain = normalizeDomain(trimmed);
-    const label = domain.includes(".") ? domain.slice(0, domain.lastIndexOf(".")) : domain;
-    const tld = getDomainTld(domain);
+    const parts = domainParts(domain);
+    const label = parts.is_registration_domain ? parts.label : domain.includes(".") ? domain.slice(0, domain.lastIndexOf(".")) : domain;
+    const tld = parts.namespace;
     const inferredMode = inferModeFromTld(label, tld, fallbackMode);
     return {
       mode: inferredMode,
@@ -431,8 +433,9 @@ function normalizeProvidedCandidate(candidate, fallbackMode = "exact") {
   const hasDomain = Boolean(candidate.domain || (typeof rawInput === "string" && rawInput.includes(".")));
   const domain = hasDomain ? normalizeDomain(candidate.domain || rawInput) : null;
   // The actual domain is the authority for routing and registrar metadata.
-  const label = domain ? domain.slice(0, domain.lastIndexOf(".")) : candidate.label || candidate.word || rawInput;
-  const tld = domain ? getDomainTld(domain) : null;
+  const parts = domain ? domainParts(domain) : null;
+  const label = parts?.is_registration_domain ? parts.label : domain ? domain.slice(0, domain.lastIndexOf(".")) : candidate.label || candidate.word || rawInput;
+  const tld = parts?.namespace || null;
   const explicitMode = candidate.mode || null;
   const explicitDomainShape = candidate.domain_shape || null;
   const resolvedMode =

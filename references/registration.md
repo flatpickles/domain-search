@@ -8,7 +8,7 @@ Requests are serialized and spaced per RDAP host or WHOIS routing host/TLD, whil
 
 Supply `--profile profile.json` with `{"country":"US","entity":"individual"}`. Entity may also be `organization` or `government`; country means individual residence or an organization's registered office/main place of business, not nationality. Keep this file with the project. Do not infer a profile from the user's language or name.
 
-Results contain separate `eligibility` evidence. Current reviewed coverage is deliberately limited to Afnic's six namespaces and .gov/.edu. `eligible` means the supplied profile passes the modeled criteria, not purchase clearance. Missing policies, missing profile facts, manual review requirements, and policies older than 180 days stay `unknown`. `--eligible-only` filters discovery to known passing rules, and can return very few names. It never suppresses user-provided checks.
+Results contain separate `eligibility` evidence. Current reviewed coverage is deliberately limited to Afnic's six namespaces, .gov/.edu, and the infrastructure-only .arpa namespace. `eligible` means the supplied profile passes the modeled criteria, not purchase clearance. Missing policies, missing profile facts, manual review requirements, and policies older than 180 days stay `unknown`. `--eligible-only` filters discovery to known passing rules, and can return very few names. It never suppresses user-provided checks.
 
 To expand reviewed coverage, `--policies policies.json` accepts an array of overrides:
 

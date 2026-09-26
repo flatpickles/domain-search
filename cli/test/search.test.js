@@ -74,7 +74,7 @@ test("checkCandidates preserves metadata and can include unknown results", async
   assert.match(summary.results[0].registration_note, /official registry homepage/);
   assert.equal(summary.results[1].status, "UNKNOWN");
   assert.equal(summary.results[1].verification_status, "unknown_needs_registrar_check");
-  assert.match(summary.results[1].verification_hint, /WHOIS inconclusive/);
+  assert.match(summary.results[1].verification_hint, /inconclusive/);
   assert.ok(summary.results[0].registration_url);
 });
 

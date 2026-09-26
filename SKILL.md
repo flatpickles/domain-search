@@ -5,7 +5,7 @@ description: Find domain ideas or check a shortlist with live availability, bund
 
 # Domain Search
 
-Use the bundled `domain-search.sh` launcher by its absolute path under this skill directory. It works from any working directory, including a symlinked installation. Use `--help` for flags; inspect implementation files only for debugging or maintenance.
+Use the bundled `domain-search.sh` launcher by its absolute path under this skill directory. It works from any working directory, including a symlinked installation. If shell launch is unavailable or extraction drops executable permissions, run `node <skill-directory>/cli/bin/domain-search.js` with the same arguments. Use `--help` for flags; inspect implementation files only for debugging or maintenance.
 
 The CLI generates and verifies candidates; the agent supplies theme, naming judgment, and accurate word meanings. Carry forward the user's liked names, rejected directions, length constraints, TLDs, budget, and requested count from the conversation. Choose relevant source words before running discovery. A high tool score measures spelling heuristics, not semantic fit or brand quality.
 
@@ -69,6 +69,8 @@ For cloud/WHOIS diagnostics, second-level namespaces, or registrant-specific fil
 - Show `registration_restriction` when present and de-emphasize restricted TLDs in broad suggestions. Missing restriction metadata is not proof of unrestricted registration. Verify eligibility before asserting a TLD is registerable for a particular user.
 - Label prices as dated TLD estimates, not domain-specific registration or renewal quotes. Verify current registrar pricing for purchase finalists when requested.
 - Domain availability does not check App Store names, product collisions, social handles, or trademarks. When requested, research those separately and keep their findings distinct from domain status.
+
+For requested finalist quotes, App Store/product overlap, or CSV/Markdown comparisons, read [references/finalists.md](references/finalists.md). Optional registrar credentials are only needed for live registrar quotes, never ordinary domain checks. For bundled-data updates or building a shareable archive, read [references/maintenance.md](references/maintenance.md).
 
 ## Shortlist input
 

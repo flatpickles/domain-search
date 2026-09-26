@@ -61,7 +61,7 @@ function getTldPricing(options = {}) {
   }
   if (explicitTlds) {
     assertKnownRootTlds(explicitTlds.map(t => t.split(".").at(-1)), "pricing");
-    for (const tld of explicitTlds) if (!isPublicNamespace(tld)) throw new Error(`Not a public registration namespace: ${tld}`);
+    for (const tld of explicitTlds) if (tld.includes(".") && !isPublicNamespace(tld)) throw new Error(`Not a public registration namespace: ${tld}`);
   }
   const tldLength = options.tldLength == null ? null : Number(options.tldLength);
   if (tldLength !== null && (!Number.isInteger(tldLength) || tldLength < 1 || tldLength > 63)) {

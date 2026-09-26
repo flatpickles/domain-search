@@ -10,6 +10,8 @@ const {
   getTldPricing,
   searchDomains,
 } = require("..");
+const { confirmDomains, checkCollisions } = require("../lib/finalists");
+const { exportComparison } = require("../lib/export");
 const { doctor } = require("../lib/doctor");
 const { runWithSession } = require("../lib/sessions");
 const { normalizeWords } = require("../lib/words");
@@ -18,12 +20,16 @@ const { normalizeDomain } = require("../lib/whois");
 function usage() {
   const script = path.basename(process.argv[1]);
   return [
-    `Usage: ${script} <generate|check|search|prices> [options]`,
+    `Usage: ${script} <generate|check|search|prices|doctor|confirm|collisions|export> [options]`,
     "",
     "Commands:",
     "  generate  Generate ranked traditional .com and whole-word domain hack candidates",
     "  check     Check a shortlist, JSON input, or direct domains/names",
     "  search    Convenience wrapper for generate + check",
+    "  confirm   Query optional Porkbun quotes for 1–25 finalist domains (keys in environment)",
+    "  collisions Search Apple software titles for 1–20 names; --country US selects storefront",
+    "  export    Compare saved results/session: --input file --format markdown|csv|json",
+    "            Optional --evidence file holds confirm/collisions output or an array of both",
     "  doctor    Check runtime/data; --network also probes HTTPS",
     "  prices    Show bundled TLD pricing and registrar metadata",
     "",
@@ -99,7 +105,7 @@ function parseArgs(argv) {
     "words-file", "input", "concurrency", "progress-format", "min-word-length",
     "max-word-length", "min-label-length", "max-domain-length",
     "session", "resume", "exclude-checked", "freshness-hours",
-    "sources-file", "preferences-file", "min-commonness", "verification", "profile", "policies",
+    "sources-file", "preferences-file", "min-commonness", "verification", "profile", "policies", "country", "evidence",
   ]);
 
   for (let i = 0; i < argv.length; i += 1) {
@@ -142,7 +148,7 @@ function parseArgs(argv) {
   for (const [key, values] of Object.entries({
     verification: ["auto", "rdap", "whois-first"],
     mode: ["mixed", "exact", "hack", "brandable"],
-    format: ["json", "markdown"],
+    format: ["json", "markdown", "csv"],
     "progress-format": ["human", "jsonl", "silent"],
   })) {
     if (flags[key] !== undefined && !values.includes(flags[key])) {
@@ -298,16 +304,32 @@ async function run() {
     process.stdout.write(`${usage()}\n`);
     process.exit(flags.help || command ? 0 : 1);
   }
-  if (command !== "check" && command !== "check-domain" && args.length) {
+  if (!["check", "check-domain", "confirm", "collisions"].includes(command) && args.length) {
     throw new Error(`${command} does not accept positional inputs; use --words-file or check.`);
   }
   if (command === "check" && flags.input && args.length) {
     throw new Error("Use either --input or positional domains, not both.");
   }
 
+  if (flags.format === "csv" && command !== "export") throw new Error("CSV format is supported by export only.");
+  if ((flags.session || flags.resume || flags["exclude-checked"] || flags["freshness-hours"]) && !["search", "check"].includes(command)) throw new Error("Session options apply only to search/check.");
+  if (flags["freshness-hours"] && !flags.session && !flags.resume && !flags["exclude-checked"]) throw new Error("freshness-hours needs a session/resume or exclude-checked file.");
+  if (flags.output && [flags.session, flags.resume].some(file => file && path.resolve(file) === path.resolve(flags.output))) throw new Error("Session and output must use different files.");
   const sessionPaths = { session: flags.session, resume: flags.resume, excludeChecked: flags["exclude-checked"], freshnessHours: flags["freshness-hours"] };
   if (flags.resume && (args.length || flags.input || flags["words-file"] || flags["sources-file"] || flags["preferences-file"] || flags["min-commonness"] || flags.mode || flags.tlds || flags.all || flags["tld-length"])) {
     throw new Error("Resume uses the saved candidate pool; start a new session to change inputs or scope.");
+  }
+  if (command === "confirm" || command === "collisions") {
+    if (flags.format && flags.format !== "json") throw new Error("confirm/collisions use JSON; use export for a comparison.");
+    const summary = command === "confirm" ? await confirmDomains(args) : await checkCollisions(args, { country: flags.country });
+    writeOutput(`${JSON.stringify(summary, null, 2)}\n`, flags);
+    return;
+  }
+  if (command === "export") {
+    if (!flags.input) throw new Error("export needs --input results-or-session.json");
+    writeOutput(exportComparison(JSON.parse(readTextInput(flags.input)), { format: flags.format || "markdown",
+      evidence: flags.evidence ? JSON.parse(readTextInput(flags.evidence)) : [] }), flags);
+    return;
   }
   if (command === "doctor") {
     writeOutput(`${JSON.stringify(await doctor({ network: Boolean(flags.network) }), null, 2)}\n`, flags);

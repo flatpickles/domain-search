@@ -1,6 +1,6 @@
 # domain-search CLI
 
-Generate and check domain names with WHOIS/RDAP availability, dated TLD price estimates, and registrar links. Node.js 22+, `whois`, and network access are needed for live checks. Offline generation and pricing need only Node.js.
+Generate and check domain names with WHOIS/RDAP availability, dated TLD price estimates, and registrar links. Node.js 22+ and network access are needed for live checks; `whois` is optional for fallback coverage. Offline generation and pricing need only Node.js.
 
 From a clone of [flatpickles/domain-search](https://github.com/flatpickles/domain-search):
 
@@ -109,3 +109,7 @@ Default freshness: AVAILABLE 1 hour, REGISTERED 24 hours, UNKNOWN 5 minutes. `--
 ## Registration boundaries and diagnostics
 
 `doctor [--network]` reports local runtime and optional HTTPS reachability. `--verification auto|rdap|whois-first` chooses lookup ordering; auto is the CLI default. WHOIS is optional. `--tlds co.uk` supports ICANN public suffixes. `--profile`, `--policies`, and `--eligible-only` add explicit eligibility checks with partial reviewed coverage. See [registration evidence](../references/registration.md).
+
+## Finalists and exports
+
+`confirm domain.app` optionally obtains a domain-specific Porkbun quote using environment credentials. `collisions "Product Name" --country US` checks Apple software search separately. `export --input results.json --format csv --evidence quotes.json` produces a portable comparison. See [finalist research](../references/finalists.md) and [data maintenance/packaging](../references/maintenance.md).

@@ -284,5 +284,12 @@
     "summary": "Eligible U.S. accredited postsecondary institutions, qualifying system offices, or institutional associations; registry review required.",
     "source_url": "https://domainlogin.educause.edu/legal/eligibility.print",
     "verified_at": "2026-09-26"
+  },
+  {
+    "namespace": "arpa",
+    "access": "closed",
+    "summary": "Infrastructure namespace; not open to ordinary public domain registrations.",
+    "source_url": "https://www.iana.org/domains/arpa",
+    "verified_at": "2026-09-26"
   }
 ]

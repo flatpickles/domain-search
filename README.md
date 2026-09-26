@@ -1,88 +1,40 @@
-# Domain Search Skill
+# Domain Search
 
-`domain-search` is an agent skill for finding and checking domain names. It helps agents generate traditional `.com` ideas, true whole-word domain hacks, and supplied brandable shortlists, then enrich results with availability, bundled pricing, direct registrar links where available, and optional descriptions.
+A self-contained agent skill for finding and checking domain names: exact names, whole-word domain hacks, and deliberately supplied brand spellings. The agent handles meaning and taste; the bundled CLI checks registration evidence and preserves dated results.
 
-The skill is intentionally unopinionated: it provides candidate generation and verification, while the user or agent handles taste, theme, and final naming judgment.
-
-## Choose Your Setup
-
-If you use Codex, Claude, or another agent app with a non-technical skills flow, add this GitHub repo as a skill:
+Install from GitHub in an agent host that supports repository-based skills:
 
 ```text
 https://github.com/flatpickles/domain-search
 ```
 
-If the app has an "Add from GitHub" or "Skills" screen, paste that URL. If it asks for a local folder, clone the repo first and select the cloned `domain-search` folder. The skill root is the repository root, and `SKILL.md` must stay at the top level.
+Or clone into your local skills folder:
 
-After installing, try a plain-language prompt:
-
-```text
-Use the domain-search skill to find available domain names for a quiet note-taking app. Prefer .com names, but include strong domain hacks if they read as real words.
-```
-
-Give the agent project or theme context before broad searches so the results are useful rather than a flat dump.
-
-## Requirements
-
-The skill and CLI need:
-
-- Node.js 22 or newer
-- Optional `whois` on `PATH` for registries that need WHOIS fallback
-- network access for live WHOIS/RDAP checks
-
-If you do not know whether you have those installed, ask Codex or Claude to check your computer for Node.js 22 and `whois`, then install the GitHub skill above.
-
-## Use
-
-Ask your agent for domain ideas, shortlist checking, TLD pricing, or `.com`/domain-hack exploration. When no TLD or domain style is specified, the skill keeps the default mixed search path:
-
-- traditional `.com` domains
-- true whole-word domain hacks
-
-Agents present mixed results in separate exact-domain and domain-hack groups. Price caps preserve that mix. Short supplied words are retained, and `--tld-length 2` handles exact two-letter-TLD searches directly.
-
-Requests that constrain TLD length or shape are exact-domain searches unless the user says they want domain hacks. For example, "four-letter bird names with a two-letter TLD" means full labels like `ibis.xx`, with split forms like `ib.is` only as a clearly labeled extra.
-
-Explicit TLD searches can use any TLD in the bundled IANA root-zone snapshot. Registrar metadata prefers Cloudflare where supported, includes per-domain direct registration/search links where available, uses Namecheap only for TLDs with bundled support evidence, and preserves dedicated registry links where needed.
-
-Registrar links are only bundled when there is positive support evidence for that registrar/TLD pair; unsupported root-zone TLDs do not get generic Namecheap links. TLDs with registrant eligibility requirements are ranked lower in broad searches and flagged when shown. Explicit requests for abbreviations and personal-brand shortlinks are supported through deliberate shortlist checks.
-
-Live lookups may require network approval from your agent host. Offline generation needs no network access. Every checked status and timestamp is saved in JSON, so agents can report taken or inconclusive names without repeating lookups.
-
-## Install In Local Skills Folders
-
-If you already know where your agent app loads local skills from, clone the repository directly into that folder.
-
-```bash
-mkdir -p ~/.codex/skills
+```sh
 git clone https://github.com/flatpickles/domain-search.git ~/.codex/skills/domain-search
 ```
 
-```bash
-mkdir -p ~/.claude/skills
-git clone https://github.com/flatpickles/domain-search.git ~/.claude/skills/domain-search
+The repository root is the skill root. For Claude, use `~/.claude/skills/domain-search`. You can also symlink an existing checkout into your agent's skills folder.
+
+Try: “Use domain-search to find short names for a musical notebook on .app. Keep the naming rationale and save a session so we can continue later.”
+
+The skill supports:
+
+- Mixed `.com` and whole-word hacks, exact TLD/length constraints, and shortlink shortlists.
+- Structured source words, likes/rejections, priorities, and portable resumable sessions.
+- RDAP/WHOIS evidence, public-suffix boundaries, and partial sourced eligibility rules.
+- Optional registrar quotes, App Store title research, and CSV/Markdown comparisons.
+
+**Requirements:** Node.js 22+ and network access for live checks. No npm dependencies or hosted service. WHOIS is optional; HTTPS-only environments can use `--verification rdap`, with incomplete registry coverage. Run `./domain-search.sh doctor` to check setup.
+
+Bundled prices are dated TLD estimates, not live quotes. Domain registration evidence, registrant eligibility, registrar buyability, and product-name overlap are separate checks. Optional Porkbun quotes require environment credentials; ordinary domain checks do not.
+
+To share a packaged skill, build from the repository:
+
+```sh
+node scripts/package-skill.js
 ```
 
-Or clone somewhere stable and symlink the repo root into each local skills folder:
+This creates `dist/domain-search.zip` with bundled code/data and a checksum manifest, excluding sessions and Git history. Extract it and select the `domain-search` folder in hosts that accept local skills, or import the ZIP where supported. Cloud execution still depends on the host's Node/network support; save session JSON files before leaving an ephemeral workspace.
 
-```bash
-git clone https://github.com/flatpickles/domain-search.git /path/to/domain-search
-ln -s /path/to/domain-search ~/.codex/skills/domain-search
-ln -s /path/to/domain-search ~/.claude/skills/domain-search
-```
-
-Restart or reload your agent app if it only scans skills at startup.
-
-## CLI
-
-The skill is powered by a standalone Node.js CLI in [`cli/`](./cli). See [`cli/README.md`](./cli/README.md) for direct CLI installation and usage.
-
-From a cloned skill repo, technical users can also run the launcher directly. It resolves the real repository root, then runs the CLI from `cli/bin/domain-search.js`, so it works when this repo is symlinked into a local skills folder.
-
-```bash
-./domain-search.sh search --words-file ./words.txt --limit 20 --progress-format human
-./domain-search.sh check walk.in leashr.me --show-all --progress-format human
-./domain-search.sh prices --max-price 20
-```
-
-Live availability checks use WHOIS/RDAP network lookups. Bootstrap RDAP can confirm registered domains, but bootstrap not-found responses are treated as inconclusive unless the TLD has curated availability handling. `generate` can produce unverified ideas without live availability checks.
+See [CLI usage](cli/README.md), [finalist research](references/finalists.md), and [data maintenance](references/maintenance.md).

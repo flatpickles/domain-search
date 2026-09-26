@@ -53,3 +53,17 @@ test('cross-run exclusions honor freshness and retain complete status records',a
   const next=await runWithSession('check',{...offline,candidates:['ONE.COM','two.com']},{excludeChecked:file});
   assert.deepEqual(next.checks.map(c=>c.domain),['two.com']);
 });
+test('portable sessions retain explicit preferences, even rejected names absent from pool',async t=>{
+ const file=fixture(t);const prefs=path.join(path.dirname(file),'preferences.json');
+ fs.writeFileSync(prefs,JSON.stringify({liked:['ibis'],rejected:['swan'],avoid:['tune']}));
+ await runWithSession('search',{...offline,words:['ibis','swan'],tlds:'com',preferencesFile:prefs},{session:file});
+ fs.unlinkSync(prefs);
+ const saved=JSON.parse(fs.readFileSync(file));
+ assert.deepEqual(saved.source_context.preferences,{liked:['ibis'],rejected:['swan'],avoid:['tune']});
+ assert.equal((await runWithSession('search',offline,{resume:file})).checked,0);
+});
+test('CLI refuses to overwrite its resumable session with formatted output',t=>{
+ const file=fixture(t);const {execFileSync}=require('node:child_process');
+ assert.throws(()=>execFileSync(process.execPath,[path.join(__dirname,'../bin/domain-search.js'),'check','one.com','--session',file,'--output',file],{stdio:'pipe'}),/different files/);
+ assert.equal(fs.existsSync(file),false);
+});

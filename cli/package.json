@@ -1,6 +1,6 @@
 {
   "name": "domain-search",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Phase-based domain search CLI for real words and brandables, with pricing and registrar metadata.",
   "type": "commonjs",
   "main": "index.js",
@@ -19,7 +19,8 @@
     "LICENSE"
   ],
   "scripts": {
-    "test": "node --test"
+    "test": "node --test",
+    "package-skill": "node ../scripts/package-skill.js"
   },
   "keywords": [
     "domains",
@@ -27,5 +28,8 @@
     "brandable-domains",
     "whois"
   ],
-  "license": "MIT"
+  "license": "MIT",
+  "engines": {
+    "node": ">=22"
+  }
 }

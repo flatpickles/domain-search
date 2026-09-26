@@ -2,6 +2,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { randomUUID } = require('node:crypto');
 const { validateDomain } = require('./whois');
+const { loadSourceContext } = require('./sources');
 const { loadEligibility } = require('./eligibility');
 const { getRootTldVersion } = require('./tlds');
 
@@ -78,10 +79,12 @@ async function runWithSession(command, options, paths = {}) {
       }
       const queryKeys = new Set(['mode','tlds','tldLength','wordsFile','sourcesFile','preferencesFile','minWordLength','maxWordLength','minLabelLength','maxDomainLength','maxPrice','all','limit','maxChecks','concurrency','showAll','showUnknown','withDescriptions','progressFormat']);
       const query = Object.fromEntries(Object.entries(options).filter(([key]) => queryKeys.has(key)));
+      const sourceContext = loadSourceContext(options);
       const eligibility = loadEligibility(options);
       query.profile = eligibility.profile;
       query.policies = [...eligibility.rules.values()];
       session = { schema_version: 1, command, created_at: new Date().toISOString(), root_tld_version: getRootTldVersion(), query,
+        source_context: { sources: [...sourceContext.records.values()], preferences: sourceContext.preferences },
         generated: generated ? { ...generated, candidates: undefined } : null, candidates: [...byDomain.values()], checks: [] };
     }
     const records = [...session.checks, ...(paths.excludeChecked ? readRecords(paths.excludeChecked).records : [])];
