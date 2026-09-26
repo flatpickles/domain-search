@@ -72,7 +72,7 @@ test("formatResults emits markdown for checked results with registrar metadata",
 
   assert.match(output, /\[`chemi\.st`\]\(https:\/\/example\.test\)/);
   assert.match(output, /Register via \[Namecheap\]/);
-  assert.match(output, /Renewal: \$18.48/);
+  assert.match(output, /Bundled TLD estimate: \$18.48/);
   assert.match(output, /A scientist or expert in chemistry/);
 });
 

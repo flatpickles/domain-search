@@ -1,6 +1,6 @@
 const tldMetadata = require("../data/tlds.json");
 const { resolveRegistrarMetadata } = require("./registrars");
-const { getRootTlds, normalizeTlds } = require("./tlds");
+const { assertKnownRootTlds, getRootTlds, normalizeTlds } = require("./tlds");
 
 function buildPriceNote(entry) {
   if (!entry || !entry.price_updated_at || !entry.price_source_name) {
@@ -55,8 +55,16 @@ function getTldPricing(options = {}) {
     options.maxPrice === undefined || options.maxPrice === null
       ? null
       : Number(options.maxPrice);
+  if (maxPrice !== null && (!Number.isFinite(maxPrice) || maxPrice < 0)) {
+    throw new Error("maxPrice must be a non-negative number.");
+  }
+  if (explicitTlds) assertKnownRootTlds(explicitTlds, "pricing");
+  const tldLength = options.tldLength == null ? null : Number(options.tldLength);
+  if (tldLength !== null && (!Number.isInteger(tldLength) || tldLength < 1 || tldLength > 63)) {
+    throw new Error("tldLength must be an integer from 1 to 63.");
+  }
 
-  let items = getAllTldPricing({ includeAllRootTlds: Boolean(options.all) });
+  let items = getAllTldPricing({ includeAllRootTlds: Boolean(options.all) || tldLength !== null });
 
   if (explicitTlds && explicitTlds.length > 0) {
     const byTld = new Map(items.map((entry) => [entry.tld, entry]));
@@ -64,8 +72,12 @@ function getTldPricing(options = {}) {
       const entry = byTld.get(tld);
       return entry || withComputedFields(createPlaceholderEntry(tld));
     });
-  } else if (!options.all && maxPrice !== null) {
+  }
+  if (maxPrice !== null) {
     items = items.filter((entry) => entry.annual_price_usd !== null && entry.annual_price_usd <= maxPrice);
+  }
+  if (tldLength !== null) {
+    items = items.filter((entry) => /^[a-z]+$/.test(entry.tld) && entry.tld.length === tldLength);
   }
 
   items.sort((a, b) => {
@@ -78,6 +90,7 @@ function getTldPricing(options = {}) {
     kind: "prices",
     all: Boolean(options.all),
     maxPrice,
+    tldLength,
     items,
     price_note:
       items[0]?.price_note ||
@@ -86,14 +99,12 @@ function getTldPricing(options = {}) {
 }
 
 function resolveSearchTlds(options = {}) {
-  if (options.tlds) {
-    return normalizeTlds(options.tlds, []);
-  }
-
-  if (options.all || options.maxPrice !== undefined) {
+  if (options.tlds || options.all || options.maxPrice !== undefined || options.tldLength != null) {
     return getTldPricing({
+      tlds: options.tlds,
       all: options.all,
       maxPrice: options.maxPrice,
+      tldLength: options.tldLength,
     }).items
       .filter((entry) => entry.tld)
       .map((entry) => entry.tld);

@@ -3,7 +3,6 @@ const {
   generateBrandableCandidates,
   generateExactCandidates,
   generateHackCandidates,
-  isCandidateLabelAllowed,
   isWholeWordHack,
   normalizeTlds,
   scoreExact,
@@ -19,7 +18,7 @@ const { fetchDescription } = require("./descriptions");
 const { enrichWithPricing, resolveSearchTlds } = require("./pricing");
 const { assertKnownRootTlds } = require("./tlds");
 const { buildWordSet, loadWords, normalizeAlphaWord, normalizeWords } = require("./words");
-const { checkDomain, getDomainTld, normalizeDomain } = require("./whois");
+const { checkDomain, getDomainTld, normalizeDomain, validateDomain } = require("./whois");
 
 const DEFAULT_SEARCH_LIMIT = 20;
 
@@ -235,31 +234,30 @@ function selectBalancedResults(items, limit, mode) {
 }
 
 function resolveMode(mode, hasExplicitTldScope) {
-  if (mode === "exact" || mode === "hack" || mode === "brandable") return mode;
+  if (mode !== undefined && mode !== null) {
+    if (!["mixed", "exact", "hack", "brandable"].includes(mode)) {
+      throw new Error("mode must be mixed, exact, hack, or brandable.");
+    }
+    return mode;
+  }
   return hasExplicitTldScope ? "exact" : "mixed";
 }
 
 function resolveGenerateOptions(options = {}) {
-  const requestedMode =
-    options.mode === "exact"
-      ? "exact"
-      : options.mode === "hack"
-        ? "hack"
-        : options.mode === "brandable"
-          ? "brandable"
-          : null;
+  const requestedMode = options.mode ?? null;
   const resolvedTlds = resolveSearchTlds({
     tlds: options.tlds,
     maxPrice: options.maxPrice,
     all: options.all,
+    tldLength: options.tldLength,
   });
   assertSupportedVerificationTlds(resolvedTlds, "generation");
-  const hasExplicitTldScope = Boolean(options.tlds || options.all || options.maxPrice !== undefined);
+  const hasExplicitTldScope = Boolean(options.tlds || options.all || options.tldLength != null);
   const mode = resolveMode(requestedMode, hasExplicitTldScope);
   const emitLimit =
     resolveNonNegativeInteger(options.emitLimit, "emitLimit", null);
 
-  if (mode === "brandable" && resolvedTlds && resolvedTlds.length > 0 && resolvedTlds.some((tld) => tld !== "com")) {
+  if (mode === "brandable" && options.tlds && normalizeTlds(options.tlds).some((tld) => tld !== "com")) {
     throw new Error("Brandable mode only supports .com output in v1.");
   }
 
@@ -267,27 +265,32 @@ function resolveGenerateOptions(options = {}) {
     mode === "mixed"
       ? intersectTlds(DEFAULT_EXACT_TLDS, resolvedTlds)
       : mode === "exact"
-        ? normalizeTlds(resolvedTlds || DEFAULT_EXACT_TLDS, DEFAULT_EXACT_TLDS)
+        ? hasExplicitTldScope ? normalizeTlds(resolvedTlds, DEFAULT_EXACT_TLDS) : intersectTlds(DEFAULT_EXACT_TLDS, resolvedTlds)
         : mode === "brandable"
-          ? ["com"]
+          ? intersectTlds(["com"], resolvedTlds)
           : null;
   const creativeTlds =
     mode === "mixed"
       ? intersectTlds(DEFAULT_MIXED_CREATIVE_TLDS, resolvedTlds)
       : mode === "hack"
-        ? normalizeTlds(resolvedTlds || DEFAULT_HACK_TLDS, DEFAULT_HACK_TLDS)
+        ? hasExplicitTldScope ? normalizeTlds(resolvedTlds, DEFAULT_HACK_TLDS) : intersectTlds(DEFAULT_HACK_TLDS, resolvedTlds)
         : null;
 
+  const explicitWords = Array.isArray(options.words) || options.wordsFile != null;
+  const minWordLength = resolvePositiveInteger(options.minWordLength, "minWordLength", explicitWords ? 1 : 5);
+  const maxWordLength = resolvePositiveInteger(options.maxWordLength, "maxWordLength", explicitWords ? 63 : 10);
+  if (minWordLength > maxWordLength) throw new Error("minWordLength must not exceed maxWordLength.");
   return {
     requestedMode,
     mode,
     tlds: [...new Set([...(exactTlds || []), ...(creativeTlds || [])])],
     exactTlds,
     creativeTlds,
-    minWordLength: mode === "brandable" ? 3 : Number(options.minWordLength ?? 5),
-    maxWordLength: mode === "brandable" ? 8 : Number(options.maxWordLength ?? 10),
-    minLabelLength: Number(options.minLabelLength ?? 3),
-    maxDomainLength: Number(options.maxDomainLength ?? 10),
+    minWordLength,
+    maxWordLength,
+    minLabelLength: resolvePositiveInteger(options.minLabelLength, "minLabelLength", explicitWords ? 1 : 3),
+    maxDomainLength: resolvePositiveInteger(options.maxDomainLength, "maxDomainLength", mode === "hack" || mode === "mixed" ? 10 : Infinity),
+    exactMaxDomainLength: resolvePositiveInteger(options.maxDomainLength, "maxDomainLength", Infinity),
     wordsFile: options.wordsFile,
     emitLimit,
     sourceWordSet: options.sourceWordSet || null,
@@ -338,9 +341,9 @@ function generateCandidates(options = {}) {
       : resolved.mode === "hack"
         ? generateHackCandidates(words, { ...resolved, tlds: resolved.creativeTlds, sourceWordSet: hackSourceWordSet })
         : resolved.mode === "brandable"
-          ? generateBrandableCandidates(words, resolved)
+          ? (resolved.exactTlds.length ? generateBrandableCandidates(words, resolved) : [])
           : mergeMixedCandidates(
-              generateExactCandidates(words, { ...resolved, tlds: resolved.exactTlds }),
+              generateExactCandidates(words, { ...resolved, maxDomainLength: resolved.exactMaxDomainLength, tlds: resolved.exactTlds }),
               generateHackCandidates(words, { ...resolved, tlds: resolved.creativeTlds, sourceWordSet: hackSourceWordSet }),
             );
   const allCandidates = withGeneratedMetadata(generated, resolved.mode);
@@ -390,6 +393,9 @@ function sortCandidatesForEvaluation(candidates) {
 }
 
 function normalizeProvidedCandidate(candidate, fallbackMode = "exact") {
+  if (candidate === null || (typeof candidate !== "string" && (typeof candidate !== "object" || Array.isArray(candidate)))) {
+    throw new Error("Each candidate must be a domain string or an object with a domain.");
+  }
   if (typeof candidate === "string") {
     const trimmed = candidate.trim();
     const domain = normalizeDomain(trimmed);
@@ -415,10 +421,9 @@ function normalizeProvidedCandidate(candidate, fallbackMode = "exact") {
   const rawInput = candidate.input || candidate.domain || candidate.label || candidate.word;
   const hasDomain = Boolean(candidate.domain || (typeof rawInput === "string" && rawInput.includes(".")));
   const domain = hasDomain ? normalizeDomain(candidate.domain || rawInput) : null;
-  const label =
-    candidate.label ||
-    (domain && domain.includes(".") ? domain.slice(0, domain.lastIndexOf(".")) : candidate.word || rawInput);
-  const tld = candidate.tld || (domain ? getDomainTld(domain) : null);
+  // The actual domain is the authority for routing and registrar metadata.
+  const label = domain ? domain.slice(0, domain.lastIndexOf(".")) : candidate.label || candidate.word || rawInput;
+  const tld = domain ? getDomainTld(domain) : null;
   const explicitMode = candidate.mode || null;
   const explicitDomainShape = candidate.domain_shape || null;
   const resolvedMode =
@@ -453,17 +458,6 @@ function normalizeProvidedCandidate(candidate, fallbackMode = "exact") {
 }
 
 function normalizeCandidate(candidate, fallbackMode = "exact") {
-  if (candidate && candidate.source_type === "wordlist") {
-    return {
-      ...candidate,
-      input: candidate.input || candidate.word || candidate.label,
-      description: candidate.description ?? null,
-      description_source: candidate.description_source || "none",
-      candidate_type: candidate.candidate_type || "real_word",
-      domain_shape: candidate.domain_shape || (candidate.mode === "hack" ? "creative_suffix" : "exact"),
-    };
-  }
-
   return normalizeProvidedCandidate(candidate, fallbackMode);
 }
 
@@ -494,14 +488,20 @@ async function evaluateCandidates(options = {}) {
   const fallbackMode =
     options.mode === "hack" ? "hack" : options.mode === "mixed" ? "exact" : "exact";
   const candidateIndexOffset = Number(options.candidateIndexOffset ?? 0);
+  const seenDomains = new Set();
   const normalizedCandidates = (options.candidates || [])
     .map((candidate) => normalizeCandidate(candidate, fallbackMode))
+    .map((candidate) => ({ ...candidate, domain: validateDomain(candidate.domain || "") }))
+    .filter((candidate) => {
+      if (seenDomains.has(candidate.domain)) return false;
+      seenDomains.add(candidate.domain);
+      return true;
+    })
     .map((candidate) =>
       applyTldScorePolicy(candidate, {
         deemphasizeRestrictedTlds: options.deemphasizeRestrictedTlds !== false && !options.tlds,
       }),
-    )
-    .filter((candidate) => isCandidateLabelAllowed(candidate));
+    );
   assertSupportedVerificationTlds(
     normalizedCandidates.map((candidate) => candidate.tld).filter(Boolean),
     "candidate checking",
@@ -538,6 +538,7 @@ async function evaluateCandidates(options = {}) {
   const checkDomainFn = options.checkDomainFn || checkDomain;
   const fetchDescriptionFn = options.fetchDescriptionFn || fetchDescription;
   const results = [];
+  const checks = [];
   let reservedChecks = 0;
   let activeGoalReservations = 0;
   let checked = 0;
@@ -582,6 +583,8 @@ async function evaluateCandidates(options = {}) {
         }
       }
       const status = typeof whoisResult === "string" ? whoisResult : whoisResult.status;
+      const checkedAt = new Date().toISOString();
+      checks.push({ domain: candidate.domain, status, checked_at: checkedAt, candidateIndex: candidate.candidateIndex });
       checked += 1;
 
       if (status === "AVAILABLE") available += 1;
@@ -599,7 +602,7 @@ async function evaluateCandidates(options = {}) {
         });
       }
 
-      if (status !== "AVAILABLE" && !(showUnknown && status === "UNKNOWN")) {
+      if (!options.showAll && status !== "AVAILABLE" && !(showUnknown && status === "UNKNOWN")) {
         return;
       }
 
@@ -626,6 +629,7 @@ async function evaluateCandidates(options = {}) {
         enrichWithPricing({
           ...candidate,
           status,
+          checked_at: checkedAt,
           ...getVerificationMetadata(status),
           description,
           description_source: descriptionSource,
@@ -642,6 +646,7 @@ async function evaluateCandidates(options = {}) {
     available,
     unknown,
     registered,
+    checks: checks.sort((a, b) => a.candidateIndex - b.candidateIndex).map(({candidateIndex, ...check}) => check),
     results: results.sort((a, b) => a.candidateIndex - b.candidateIndex),
   };
 }
@@ -653,6 +658,7 @@ function resolveSummaryMode(mode) {
 }
 
 async function checkCandidates(options = {}) {
+  resolveMode(options.mode, false);
   const limit = resolveNonNegativeInteger(options.limit, "limit", Number.POSITIVE_INFINITY);
   const evaluated = await evaluateCandidates(options);
   const selected = selectBalancedResults(
@@ -670,6 +676,11 @@ async function checkCandidates(options = {}) {
     available: evaluated.available,
     unknown: evaluated.unknown,
     registered: evaluated.registered,
+    checks: evaluated.checks,
+    remaining_candidates: evaluated.candidates.length - evaluated.checked,
+    search_truncated: evaluated.checked < evaluated.candidates.length,
+    max_checks_applied: Math.min(evaluated.candidates.length, resolveNonNegativeInteger(options.maxChecks, "maxChecks", Infinity)),
+    stop_reason: evaluated.checked < evaluated.candidates.length ? "max_checks" : "exhausted",
     results: selected.results.map(({ candidateIndex, ...candidate }) => candidate),
     selection_policy: selected.selectionPolicy,
     selected_counts: selected.selectedCounts,
@@ -776,6 +787,7 @@ async function searchDomains(options = {}) {
     unknown: 0,
     registered: 0,
     results: [],
+    checks: [],
   };
 
   for (const batch of batches) {
@@ -787,7 +799,7 @@ async function searchDomains(options = {}) {
       mode: generated.mode,
       candidates: batch,
       maxChecks: budgets.maxChecksApplied - aggregate.checked,
-      availableGoal: Number.isFinite(limit) ? limit : Number.POSITIVE_INFINITY,
+      availableGoal: Number.isFinite(limit) ? limit : undefined,
       progressSeed: {
         checked: aggregate.checked,
         available: aggregate.available,
@@ -802,6 +814,7 @@ async function searchDomains(options = {}) {
     aggregate.unknown += evaluated.unknown;
     aggregate.registered += evaluated.registered;
     aggregate.results.push(...evaluated.results);
+    aggregate.checks.push(...evaluated.checks);
   }
 
   const orderedResults = aggregate.results
@@ -827,6 +840,7 @@ async function searchDomains(options = {}) {
     available: aggregate.available,
     unknown: aggregate.unknown,
     registered: aggregate.registered,
+    checks: aggregate.checks,
     results: selected.results.map(({ candidateIndex, ...candidate }) => candidate),
     selection_policy: selected.selectionPolicy,
     selected_counts: selected.selectedCounts,
@@ -834,6 +848,7 @@ async function searchDomains(options = {}) {
     search_truncated: searchTruncated,
     remaining_candidates: remainingCandidates,
     max_checks_applied: budgets.maxChecksApplied,
+    stop_reason: remainingCandidates === 0 ? "exhausted" : Number.isFinite(limit) && aggregate.available >= limit ? "result_limit" : "max_checks",
   };
 }
 

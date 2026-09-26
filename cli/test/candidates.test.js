@@ -79,10 +79,10 @@ test("generateBrandableCandidates excludes corporate filler source words and tai
   assert.ok(results.every((item) => !hasBlockedCorporateTail(item.label)));
 });
 
-test("generateExactCandidates filters labels ending in corporate filler tails", () => {
+test("generateExactCandidates preserves explicitly supplied source labels", () => {
   const results = generateExactCandidates(["stageco", "sunrise"], { tlds: ["com"] });
 
-  assert.ok(!results.some((item) => item.domain === "stageco.com"));
+  assert.ok(results.some((item) => item.domain === "stageco.com"));
   assert.ok(results.some((item) => item.domain === "sunrise.com"));
 });
 

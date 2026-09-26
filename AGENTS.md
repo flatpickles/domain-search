@@ -13,12 +13,12 @@ Domain-search behavior to preserve:
 
 - Use `search` for open-ended domain discovery.
 - Use `generate` only when an intermediate filtering step is needed.
-- Use `check` for user-provided or deliberately curated shortlists.
-- Without `--mode`, `--tlds`, `--all`, or `--max-price`, preserve the mixed default: traditional `.com` domains plus true whole-word domain hacks.
+- Use `check` for user-provided or deliberately curated shortlists. Validate syntax and delegation, but do not silently drop provided domains on taste grounds. Keep generated-name quality filtering in discovery.
+- Without `--mode`, `--tlds`, `--tld-length`, or `--all`, preserve the mixed default (including when a price cap is set): traditional `.com` domains plus true whole-word domain hacks.
 - Treat TLD-length or TLD-shape constraints as exact-domain searches unless the user explicitly asks for domain hacks. For example, "four-letter bird names with a two-letter TLD" means full labels like `ibis.xx`, not split hacks like `ib.is`.
 - In mixed-mode responses, keep traditional exact domains and domain hacks visible as separate groups when both are available.
-- Treat a domain hack as valid only when the label plus TLD reads as one ordinary word. Do not pad weak result sets with phrase-like hacks, arbitrary suffix domains, or coined non-`.com` alternatives.
-- Use `--mode exact` for traditional `.com` domains only.
+- For default discovery, domain hacks must read as one ordinary word across the dot. Do not pad weak result sets. Honor explicit requests for abbreviations, phrases, or brand shortlinks using deliberate shortlist checks.
+- Use `--mode exact` for full labels under the requested TLDs; `.com` is its default.
 - Use `--mode hack` for whole-word domain hacks only.
 - Use `--mode brandable` only with explicit source words. It emits `.com` candidates only and should not force availability with filler endings like `co`, `company`, `corp`, `inc`, `llc`, or `ltd`.
 - Use `--with-descriptions` only on final result sets.

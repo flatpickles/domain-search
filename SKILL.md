@@ -1,189 +1,76 @@
 ---
 name: domain-search
-description: Use when you need an unopinionated domain-search tool for traditional .com domains, true whole-word domain hacks, or provided brandable shortlists, then enrich the results with availability, pricing, registrar links, and optional descriptions.
+description: Find domain ideas or check a shortlist with live availability, bundled TLD pricing, and registrar links. Supports exact TLDs, whole-word domain hacks, and explicitly requested brandable or shortlink names.
 ---
 
 # Domain Search
 
-Use this skill when the user wants domain ideas, shortlist checking, TLD pricing, or either traditional `.com` domains or true whole-word domain hacks for real words or invented names.
+Use the bundled `domain-search.sh` launcher by its absolute path under this skill directory. It works from any working directory, including a symlinked installation. Use `--help` for flags; inspect implementation files only for debugging or maintenance.
 
-This skill is intentionally tool-like. It does not encode themes, vibes, or semantic filtering. If the user does not specify a TLD or domain style, use the default mixed search path:
+The CLI generates and verifies candidates; the agent supplies theme, naming judgment, and accurate word meanings. Carry forward the user's liked names, rejected directions, length constraints, TLDs, budget, and requested count from the conversation. Choose relevant source words before running discovery. A high tool score measures spelling heuristics, not semantic fit or brand quality.
 
-- traditional `.com` domains
-- true whole-word domain hacks, where the label plus the TLD reads as the target word
+## Choose the search shape
 
-Only override that mixed default when the user explicitly asks for a constraint such as `.com` only, one specific TLD, or domain hacks only.
+| User intent | Workflow |
+| --- | --- |
+| Fresh ideas, no TLD/style specified | `search --words-file ...` for mixed `.com` plus whole-word hacks |
+| `.com` only | `search --mode exact --tlds com --words-file ...` |
+| Specific extensions, such as `.app` or `.com`/`.net` | `search --mode exact --tlds app --words-file ...` or `--tlds com,net` |
+| Full names under two-letter TLDs | `search --mode exact --tld-length 2 --words-file ...` |
+| Whole-word hacks only | `search --mode hack --words-file ...` |
+| Short coined `.com` blends from explicit source words | `search --mode brandable --words-file ...` only when requested |
+| A provided domain or deliberate shortlist | `check domain.app other.com --show-all` or `check --input shortlist.json --show-all` |
+| Intermediate semantic filtering is useful | `generate`, curate the output, then `check` |
 
-Treat TLD-length or TLD-shape requests as exact-domain constraints, not domain-hack requests. If the user asks for words or names "with a two-letter TLD", "with an N-letter TLD", "on a ccTLD", or similar, keep the whole requested word or name as the second-level label and use matching TLDs: `ibis.xx` or `swan.xx`, not `ib.is` or `sw.an`. Build the explicit TLD set for that shape and run exact checking/searching with `--mode exact --tlds ...`, or check a deliberate shortlist of exact domains. Only include split-across-the-dot hacks for these prompts when the user explicitly asks for domain hacks, split-dot forms, or as a clearly labeled bonus section after the exact-domain baseline.
+A TLD-length constraint preserves the complete label: four-letter bird names with two-letter TLDs means `ibis.xx`, not `ib.is`. `--tld-length` selects delegated ASCII TLDs by length; it does not certify public registration or registrant eligibility. `--all` selects the bundled root-zone snapshot, including restricted and closed TLDs.
 
-Use `--mode brandable` when the user explicitly wants shorter brandable `.com` ideas from a supplied source list.
-Do not hand-build exploratory shortlist names that just append corporate filler like `co`, `company`, `corp`, `inc`, `llc`, or `ltd` to force availability.
+A price cap alone preserves mixed discovery. `--max-price` intersects the selected TLDs using dated bundled prices and excludes TLDs with unknown prices. It is not a live quote or proof that a particular domain meets the budget. Use `--mode mixed` to request mixed discovery explicitly.
 
-The usual patterns are:
+For default discovery, hacks must join into one ordinary word (`apprai.se` → `appraise`; colloquial `truck.in` → `truckin` is supported). Do not pad with arbitrary suffixes or phrases such as `trucks.in` or `tune.me`. Keep non-`.com` exact names within the user's explicit TLD scope.
 
-1. use `search` when the user wants fresh domain ideas
-2. use `generate` only when you explicitly want an intermediate filtering step
-3. use `check` only when you already have a deliberate shortlist
+Explicit user requests for acronyms, abbreviations, phonetic spellings, phrases, or personal-brand shortlinks override that default. For example, a request mentioning `nt.es` or `notes.pics` calls for a deliberate shortlist checked directly; describe these as shortlinks or brand spellings rather than ordinary-word hacks. Do not reject a user's supplied domain because it falls outside discovery taste rules.
 
-Or:
+Avoid appending corporate filler such as `co` or `company` merely to force availability. Existing words such as `disco` and `zinc` are valid. Prefer natural names and a shorter strong list over contrived compounds added to reach a count.
 
-1. only use an external shortlist when the user already supplied it, or when the user explicitly asked for `.com` brandables from a supplied source list
-2. pass that shortlist directly to `check`
+## Run a bounded live pass
 
-## Prompt-Minimizing Live Checks
-
-`search` and `check` run live WHOIS/RDAP availability checks. In sandboxed agents such as Codex, these may require approval to run outside the sandbox.
-
-When verified availability is needed, choose one appropriately sized live command for the user's request instead of running a small check and then an automatic wider follow-up check.
-If the user asked for a larger or more exhaustive result set, set `--limit` and, when useful, `--max-checks` on the first `search` or `check` command.
-Do not run a second wider `check` just because `search_truncated`, `remaining_candidates`, or a thin result set shows more candidates are available to inspect; report that fact and let the user decide whether to request a deeper pass.
-
-Do not use `--show-unknown` in normal final-result searches. Only include unknowns when the user explicitly asks for inconclusive results, diagnostics, or broader status reporting.
-If live-check approval is denied, fall back to `generate` when useful and label the ideas as unverified.
-
-## Launcher
-
-Use the bundled launcher script directly. Do not inspect the repository structure or try to locate the CLI implementation unless the launcher fails.
-
-Claude Code:
+These examples use `./domain-search.sh` from the skill root; elsewhere use its absolute path.
 
 ```bash
-${CLAUDE_SKILL_DIR}/domain-search.sh generate --words-file ./words.txt --limit 100
+./domain-search.sh search --words-file ./words.txt --limit 20 --max-checks 480 --progress-format human --output ./results.json
+./domain-search.sh search --mode exact --tld-length 2 --words-file ./birds.txt --min-word-length 4 --max-word-length 4 --limit 30 --max-checks 600 --output ./birds.json
+./domain-search.sh check melodybook.app musicnotes.com --show-all --progress-format human
+./domain-search.sh prices --tlds com,app --max-price 30
 ```
 
-Generic local invocation:
+Supplied source words retain short names by default; the bundled dictionary defaults to 5–10 letters. Use `--min-word-length` / `--max-word-length` for source words, `--min-label-length` for the part before the dot, and `--max-domain-length` for the entire domain including the dot and TLD. Brandable generation combines 3–8-letter source tokens into 6–10-letter `.com` labels; use direct checking for longer coined names.
 
-```bash
-./domain-search.sh generate --words-file ./words.txt --limit 100
-```
+Choose a useful word pool, result count, and check budget before the first live call. `search --limit N` stops after finding N available domains or exhausting its budget/pool. `check --limit N` only trims the displayed results; use `--max-checks` to bound network work. Omit the result limit and set a sufficient check budget for an explicitly exhaustive pass. Report coverage rather than claiming “all” when checks remain or some are inconclusive.
 
-## Recommended Workflows
+Live checks need network access and may require the host's sandbox approval. Reuse authorized launcher access where available. Do not trigger redundant lookups to retrieve statuses: JSON `checks` records every checked domain, status, and timestamp, even when `results` shows only available names. `--show-all` displays all statuses for shortlist questions; `--show-unknown` is for inconclusive-result reporting. Ordinary discovery results should stay available-only.
 
-Open-ended discovery:
+Do not automatically broaden an ordinary request just because a result set is thin. If the user explicitly asks to keep searching, continue within their requested scope and total check budget, using new candidates and existing results to avoid duplicates. Stop at the requested count, budget, exhausted useful ideas, or persistent lookup failures. If live access is denied, generate unverified ideas when useful and label them clearly.
 
-```bash
-./domain-search.sh search --words-file ./words.txt --limit 20 --progress-format human
-```
+## Interpret and present results
 
-When you use the default mixed search path, present the final results in two sections:
+- `AVAILABLE` is a positive WHOIS/curated RDAP indication, not a completed registrar checkout. Reserved names, premiums, or eligibility requirements may still prevent ordinary registration. `REGISTERED` means taken; `UNKNOWN` is inconclusive. An absent website or DNS record proves neither availability nor registration.
+- Generic bootstrap RDAP not-found responses remain `UNKNOWN`; they must not be promoted to available. Do not repeat the same failed batch to make unknowns disappear.
+- Read `checked`, `candidatePool`, `remaining_candidates`, and `stop_reason` (`result_limit`, `max_checks`, or `exhausted`). Explain incomplete coverage briefly when relevant. Results include `checked_at`; do not present old saved checks as current.
+- Present mixed results in separate traditional exact domain and domain hack groups, retaining both when available. Include the joined word for hacks and short meanings or naming rationale when useful. `--with-descriptions` fetches definitions for available real-word candidates; supplied descriptions are preserved.
+- Link available domain names to `direct_registration_url` when provided. Otherwise use `registration_url` if it is a verified registrar link, and identify generic dashboards or registry pages accurately. Cloudflare is preferred where supported; do not guess Namecheap or other registrar support from delegation alone.
+- Show `registration_restriction` when present and de-emphasize restricted TLDs in broad suggestions. Missing restriction metadata is not proof of unrestricted registration. Verify eligibility before asserting a TLD is registerable for a particular user.
+- Label prices as dated TLD estimates, not domain-specific registration or renewal quotes. Verify current registrar pricing for purchase finalists when requested.
+- Domain availability does not check App Store names, product collisions, social handles, or trademarks. When requested, research those separately and keep their findings distinct from domain status.
 
-- traditional exact domains
-- domain hacks
+## Shortlist input
 
-If both shapes survive checking, keep both visible in the final answer. Do not rerank a mixed run into a mostly-`.com` final list unless the user explicitly asked for that outcome.
-
-Wordlist-driven generation when you want an intermediate filter step:
-
-```bash
-./domain-search.sh generate --words-file ./words.txt --limit 200
-```
-
-Filter tool output externally and check:
-
-```bash
-./domain-search.sh check --input shortlist.json --limit 20 --progress-format human
-```
-
-Direct provided shortlist:
-
-```bash
-./domain-search.sh check --input shortlist.json --progress-format human
-```
-
-When presenting final checked results, preserve actionable per-domain links. If a result has
-`direct_registration_url`, render the available domain itself as a Markdown link to that URL.
-Otherwise use `registration_url` only when it is a registrar link. Do not collapse available
-domains into generic "Cloudflare Domains" or "Namecheap search" starting points when per-domain
-links are present. If only a generic dashboard or registry page is bundled, say that directly.
-Only link to a registrar when the bundled metadata has positive evidence that registrar supports
-that TLD. Do not assume Namecheap or any other fallback registrar for every delegated root-zone
-TLD. If registrar support is unknown, leave the registrar link blank or use an official registry
-page when one is bundled.
-Treat TLDs with registrant eligibility requirements as lower-priority suggestions. If a restricted
-TLD appears in results, flag the restriction in the response and mention the relevant requirement.
-
-Structured shortlist contract:
+`check --input` accepts newline-separated complete domains, an array of domain strings/objects, or JSON from `generate` / a previous result. Equivalent normalized domains are checked once; the first entry's descriptive metadata is retained. Invalid domains and undelegated TLDs fail before lookups.
 
 ```json
 [
-  {
-    "domain": "leashr.me",
-    "label": "leashr",
-    "word": "leashr",
-    "candidate_type": "brandable",
-    "source_type": "provided",
-    "description": "Friendly dog-walking brand.",
-    "description_source": "agent",
-    "score": 31
-  }
+  {"domain": "melodybook.app", "description": "A literary name for a musical notebook."},
+  "nt.es"
 ]
 ```
 
-Plain text domain list:
-
-```bash
-printf "walk.in\nromp.in\nleashr.me\n" | ./domain-search.sh check --input -
-```
-
-Use one-shot search only when you do not need an intermediate filtering step:
-
-```bash
-./domain-search.sh search --words-file ./words.txt --limit 20 --progress-format human
-```
-
-Search now applies bounded progressive checking by default. When a ranked search stops early, use `search_truncated`, `remaining_candidates`, and `max_checks_applied` in the output to explain that more ranked candidates were available but not checked yet.
-Do not run an automatic wider follow-up check when a search stops early; summarize the checked results and mention that more candidates remain unchecked.
-Do not hand-build arbitrary non-`.com` domains and call them hacks.
-When the user did not explicitly ask for a TLD, do not invent non-`.com` exact domains or coined non-`.com` brandables like `steady.st`, `equilia.in`, or `steadia.in`.
-For open-ended unspecified-TLD discovery, use `search` and keep the result space to `.com` exact domains plus true whole-word hacks.
-For TLD-shape requests, do the exact-domain pass first. A prompt like "four-letter bird names with a two-letter TLD" means exact domains like `ibis.xx`, not `ib.is`; hacks can be an optional extra only after that baseline.
-For hack output, the label plus the TLD must read as a single ordinary word, for example `truck.in` -> `truckin`.
-Do not relax this into a phrase, sentence fragment, or multiple-word reading. Reject examples like `tune.me`, `level.ed`, or `driftless.in` when the joined reading is not one real word.
-Reject splits like `trucks.in`, `steady.st`, or `anchor.st` when the join does not read as a real full-word hack.
-If confirmed-available full-word hacks are scarce, return fewer results and say so. Do not pad with short suffix domains, phrase-like hacks, or coined non-`.com` alternatives.
-
-Inspect bundled pricing:
-
-```bash
-./domain-search.sh prices --max-price 20
-```
-
-Unknown-result fallback:
-
-1. Run `check` first.
-2. If the requested TLD is outside the delegated IANA root-zone set, the tool should reject it up front instead of surfacing an inconclusive result.
-3. Only surface results that the tool classifies as `AVAILABLE` in default output.
-4. If a result is `UNKNOWN`, report it as inconclusive and include the registrar link.
-
-## Notes
-
-- `generate` is for wordlist-derived candidates, not a requirement for all workflows.
-- For “find me domains” requests, start with `search`, not a hand-built shortlist.
-- Do not start with ad hoc shortlist JSON for open-ended discovery requests.
-- For open-ended discovery without an explicit TLD, do not use `check` on agent-crafted non-`.com` ideas; only check tool-generated candidates or a user-provided shortlist.
-- For open-ended discovery without an explicit TLD, if the valid full-word hack pool is thin, say that directly and return a short list rather than filling space with junk.
-- Do not use external `jq` trimming/ranking unless the user explicitly wants custom post-processing.
-- Without `--mode`, `--tlds`, `--all`, or `--max-price`, the default is a mixed search: `.com` plus a curated whole-word domain-hack set.
-- TLD-length or TLD-shape constraints are explicit exact-domain constraints. Use full labels under matching TLDs first, not `2+2` or other split hacks.
-- Use `--mode brandable` only with explicit source words; it does not fall back to the bundled dictionary and it emits `.com` candidates only in v1.
-- Do not force availability with filler endings like `co` or `company`; prefer broader source words, explicit `--mode brandable`, or a deliberate shortlisted `check` pass.
-- With `--limit`, mixed-mode `search` and mixed-shape `check` apply built-in soft balancing so the final shortlist keeps some traditional and some creative results when both are available.
-- Only force `--mode exact`, `--tlds`, or `--mode hack` when the user directly specifies that constraint.
-- Use `--mode exact` for traditional `.com` domains only.
-- Use `--mode hack` for true whole-word domain hacks only. "Domain hack" is secondary jargon; do not require the user to say it.
-- For mixed-mode responses, split the output into traditional exact results and domain hacks instead of blending everything into one list.
-- Do not collapse a mixed run into mostly `.com` picks just because they feel safer or more standard unless the user asked for that preference.
-- `check` accepts candidate JSON from `--input <path>` or `--input -`.
-- `check` is the preferred path for a user-provided shortlist, or for deliberate `.com` brandable shortlists built from explicit source words.
-- Use `--with-descriptions` only on final result sets.
-- Bundled price data is dated and advisory; the tool should say it may now be out of date.
-- The verification allowlist is the bundled IANA root-zone TLD snapshot, not the smaller pricing list.
-- WHOIS checks can fall back to IANA RDAP bootstrap data for delegated TLDs that do not have custom local RDAP metadata. Bootstrap RDAP can confirm registered domains, but bootstrap 404/not-found responses are treated as inconclusive unless the TLD has curated local RDAP availability handling.
-- Registration links prefer Cloudflare for TLDs in the bundled Cloudflare Registrar support snapshot, use Namecheap only where bundled metadata verifies support for that TLD, and preserve dedicated registry links for TLDs that need them.
-- Result JSON can include both preferred registrar fields and `direct_registration_url`; use `direct_registration_url` for clickable available-domain names because it is the per-domain action link.
-- Do not link to Namecheap, Cloudflare, or any other registrar unless that registrar is explicitly bundled for the TLD; root-zone delegation alone is not registrar support evidence.
-- Restricted TLDs include `registration_restriction` metadata. De-emphasize them in broad searches and surface the restriction when presenting them.
-- Pricing source and registration source are separate; do not assume price metadata implies registrar support.
-- If no reliable bundled registration target is known, report that the registration link is unavailable rather than guessing.
-- If a requested TLD is outside the delegated IANA root-zone set, fail closed and say the tool cannot verify that TLD.
-- When supplying coined names, include your own short `description` if you have one.
+For all CLI flags, limits, and library usage, consult [cli/README.md](cli/README.md).

@@ -97,6 +97,8 @@ function applyTldScorePolicy(candidate, options = {}) {
 function hasBlockedCorporateTail(label) {
   const normalized = normalizeAlphaWord(label);
   if (!normalized) return false;
+  // These letters are not filler when they are part of an existing word.
+  if (isKnownWord(normalized) && !BLOCKED_CORPORATE_SOURCE_WORDS.has(normalized)) return false;
   if (BLOCKED_CORPORATE_TAILS.some((tail) => normalized.endsWith(tail))) return true;
   return normalized.endsWith("co");
 }
@@ -112,7 +114,7 @@ function isWholeWordHack(candidate, options = {}) {
   if (!label || !tld) return false;
 
   const joinedWord = normalizeAlphaWord(candidate.joined_word || `${label}${tld}`);
-  if (!joinedWord) return false;
+  if (!joinedWord || joinedWord !== `${label}${tld}`) return false;
   if (isKnownWord(joinedWord, options.sourceWordSet)) return true;
 
   if (tld === "in") {
@@ -126,7 +128,6 @@ function isWholeWordHack(candidate, options = {}) {
 function isCandidateLabelAllowed(candidate, options = {}) {
   const label = normalizeAlphaWord(candidate.label || candidate.word);
   if (!label) return false;
-  if (hasBlockedCorporateTail(label)) return false;
 
   if (candidate.domain_shape === "creative_suffix") {
     if (candidate.source_type === "provided" && candidate.candidate_type !== "real_word") {
@@ -238,6 +239,8 @@ function generateBrandableCandidates(words, options = {}) {
       if (/[bcdfghjklmnpqrstvwxyz]{5}/.test(label)) continue;
 
       const domain = `${label}.com`;
+      if (label.length < (options.minLabelLength ?? 1)) continue;
+      if (domain.length > (options.maxDomainLength ?? Infinity)) continue;
       const candidate = {
         mode: "brandable",
         domain_shape: "exact",
@@ -316,7 +319,7 @@ function generateHackCandidates(words, options = {}) {
 
   return diversifyHackCandidates(
     [...bestByDomain.values()]
-      .filter((candidate) => candidate.score >= threshold)
+      .filter((candidate) => candidate.score - (candidate.tld_score_adjustment || 0) >= threshold)
       .sort((a, b) => b.score - a.score || a.domain.localeCompare(b.domain)),
   );
 }
@@ -325,7 +328,7 @@ function generateExactCandidates(words, options = {}) {
   const tlds = normalizeTlds(options.tlds, DEFAULT_EXACT_TLDS);
   const threshold = Number(options.scoreThreshold ?? 22);
 
-  return words
+  const ranked = words
     .flatMap((word) =>
       tlds.map((tld) =>
         applyTldScorePolicy(
@@ -343,8 +346,18 @@ function generateExactCandidates(words, options = {}) {
       ),
     )
     .filter((candidate) => isCandidateLabelAllowed(candidate))
-    .filter((candidate) => candidate.score >= threshold)
+    .filter((candidate) => candidate.label.length >= (options.minLabelLength ?? 1))
+    .filter((candidate) => candidate.domain.length <= (options.maxDomainLength ?? Infinity))
+    .filter((candidate) => candidate.score - (candidate.tld_score_adjustment || 0) >= threshold)
     .sort((a, b) => b.score - a.score || a.domain.localeCompare(b.domain));
+  // Large TLD sweeps should sample every requested label before spending the
+  // entire budget on every extension of the first high-scoring word.
+  const byWord = new Map();
+  for (const candidate of ranked) {
+    if (!byWord.has(candidate.word)) byWord.set(candidate.word, []);
+    byWord.get(candidate.word).push(candidate);
+  }
+  return roundRobinBuckets([...byWord].map(([key, items]) => ({ key, items })));
 }
 
 module.exports = {

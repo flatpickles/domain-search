@@ -88,7 +88,7 @@ function formatResultLine(item) {
   const domainLabel = formatDomainLabel(item, isRegistrarLink);
   const directRegistration =
     item.direct_registration_provider && item.direct_registration_url && !isRegisteredResult(item)
-      ? ` Register via [${item.direct_registration_provider}](${item.direct_registration_url}).`
+      ? ` ${item.status === "UNKNOWN" ? "Verify" : "Register"} via [${item.direct_registration_provider}](${item.direct_registration_url}).`
       : "";
   const registration = item.registration_provider && item.registration_url
     ? item.direct_registration_url && item.direct_registration_url === item.registration_url
@@ -96,7 +96,7 @@ function formatResultLine(item) {
       : isRegistrarLink
         ? item.direct_registration_url
           ? ` Preferred registrar: [${item.registration_provider}](${item.registration_url}).`
-          : ` Register via [${item.registration_provider}](${item.registration_url}).`
+          : ` ${isRegisteredResult(item) || item.status === "UNKNOWN" ? "Registrar" : "Register via"} [${item.registration_provider}](${item.registration_url}).`
         : ` Official registry: [${item.registration_provider}](${item.registration_url}).`
     : "";
   const fallbackRegistration =
@@ -107,7 +107,7 @@ function formatResultLine(item) {
       ? ` Fallback: [${item.fallback_registration_provider}](${item.fallback_registration_url}).`
       : "";
   const registrationNote = item.registration_note ? ` ${item.registration_note}` : "";
-  const price = item.price !== null && item.price !== undefined ? ` Renewal: $${item.price}/year.` : "";
+  const price = item.price !== null && item.price !== undefined ? ` Bundled TLD estimate: $${item.price}/year.` : "";
   const typeLabel = item.candidate_type === "brandable" ? "brandable" : "real-word";
   const verificationHint = item.verification_hint ? ` ${item.verification_hint}` : "";
   const restriction = formatRegistrationRestriction(item);
@@ -159,11 +159,11 @@ function formatCheckMarkdown(summary) {
     lines.push("", policyLabel);
   }
 
-  if (summary.kind === "search") {
+  if (summary.search_truncated !== undefined) {
     const truncatedLabel = summary.search_truncated ? "yes" : "no";
     lines.push(
       "",
-      `Search truncated: ${truncatedLabel}. Checked ${summary.checked} candidates with a max search budget of ${summary.max_checks_applied}; ${summary.remaining_candidates} ranked candidates remain unchecked.`,
+      `Search truncated: ${truncatedLabel}. Checked ${summary.checked} candidates with a max search budget of ${summary.max_checks_applied}; ${summary.remaining_candidates} ranked candidates remain unchecked.${summary.stop_reason ? ` Stop reason: ${summary.stop_reason}.` : ""}`,
     );
   }
 

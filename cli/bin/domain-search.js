@@ -25,10 +25,11 @@ function usage() {
     "  prices    Show bundled TLD pricing and registrar metadata",
     "",
     "Shared options:",
-    "  --mode <hack|exact|brandable> Force domain hack, traditional exact, or brandable .com domains",
+    "  --mode <mixed|hack|exact|brandable> Choose .com + hacks, hacks, exact TLDs, or brandable .com",
     "  --tlds <list>                Comma-separated TLDs",
+    "  --tld-length <n>             Use delegated ASCII TLDs with exactly n letters",
     "  --limit <n>                  Result limit",
-    "  --max-checks <n>             Maximum WHOIS checks",
+    "  --max-checks <n>             Maximum domain checks (including RDAP fallback)",
     "  --max-price <n>              Use bundled TLD prices to limit selected TLDs",
     "  --all                        Use every delegated IANA root-zone TLD",
     "  --format <json|markdown>     Output format",
@@ -42,6 +43,7 @@ function usage() {
     "  --concurrency <n>            Concurrent WHOIS checks",
     "  --with-descriptions          Fetch one short description for real-word results",
     "  --show-unknown               Include UNKNOWN WHOIS results",
+    "  --show-all                   Include registered and unknown domains in results",
     "  --progress-format <human|jsonl|silent>",
     "",
     "Word filtering:",
@@ -56,7 +58,9 @@ function usage() {
     `  ${script} brandable ...  => ${script} search --mode brandable ...`,
     "",
     "Default behavior:",
-    "  Without --mode, --tlds, --all, or --max-price, generate/search uses a mixed strategy: .com plus a curated whole-word domain hack set.",
+    "  Without --mode, --tlds, --tld-length, or --all, generate/search uses .com plus whole-word hacks; --max-price only filters that scope.",
+    "  Supplied source words include short names; dictionary defaults use 5-10 letters.",
+    "  check --limit trims displayed results; --max-checks limits network work. JSON checks records every lookup.",
     "  Search now applies bounded progressive checking by default and may return partial results with search_truncated=true.",
   ].join("\n");
 }
@@ -68,8 +72,14 @@ function parseArgs(argv) {
     "all",
     "help",
     "show-unknown",
+    "show-all",
     "with-definitions",
     "with-descriptions",
+  ]);
+  const valueFlags = new Set([
+    "mode", "tlds", "tld-length", "limit", "max-checks", "max-price", "format", "output",
+    "words-file", "input", "concurrency", "progress-format", "min-word-length",
+    "max-word-length", "min-label-length", "max-domain-length",
   ]);
 
   for (let i = 0; i < argv.length; i += 1) {
@@ -83,10 +93,16 @@ function parseArgs(argv) {
       continue;
     }
 
-    const [key, inlineValue] = token.split("=", 2);
+    const equals = token.indexOf("=");
+    const key = equals < 0 ? token : token.slice(0, equals);
+    const inlineValue = equals < 0 ? undefined : token.slice(equals + 1);
     const normalizedKey = key.slice(2);
+    if (!booleanFlags.has(normalizedKey) && !valueFlags.has(normalizedKey)) {
+      throw new Error(`Unknown option: ${key}`);
+    }
 
     if (inlineValue !== undefined) {
+      if (!inlineValue || booleanFlags.has(normalizedKey)) throw new Error(`Invalid value for ${key}`);
       flags[normalizedKey] = inlineValue;
       continue;
     }
@@ -97,11 +113,20 @@ function parseArgs(argv) {
     }
 
     const value = argv[i + 1];
-    if (value === undefined) {
+    if (value === undefined || value.startsWith("--")) {
       throw new Error(`Missing value for ${key}`);
     }
     flags[normalizedKey] = value;
     i += 1;
+  }
+  for (const [key, values] of Object.entries({
+    mode: ["mixed", "exact", "hack", "brandable"],
+    format: ["json", "markdown"],
+    "progress-format": ["human", "jsonl", "silent"],
+  })) {
+    if (flags[key] !== undefined && !values.includes(flags[key])) {
+      throw new Error(`--${key} must be one of: ${values.join(", ")}`);
+    }
   }
 
   return {
@@ -143,6 +168,7 @@ function toGenerateOptions(flags, options = {}) {
   return {
     mode: flags.mode,
     tlds: flags.tlds,
+    tldLength: flags["tld-length"],
     wordsFile: flags["words-file"],
     minWordLength: flags["min-word-length"],
     maxWordLength: flags["max-word-length"],
@@ -162,6 +188,7 @@ function toCheckOptions(flags) {
     concurrency: flags.concurrency,
     maxChecks: flags["max-checks"],
     showUnknown: Boolean(flags["show-unknown"]),
+    showAll: Boolean(flags["show-all"]),
     withDefinitions: Boolean(flags["with-definitions"]),
     withDescriptions: Boolean(flags["with-descriptions"] || flags["with-definitions"]),
     progressFormat: flags["progress-format"] || "human",
@@ -191,6 +218,7 @@ function createCandidatesFromArgs(args, flags) {
   const generated = generateCandidates({
     mode: flags.mode,
     tlds: flags.tlds,
+    tldLength: flags["tld-length"],
     words,
     minWordLength: flags["min-word-length"],
     maxWordLength: flags["max-word-length"],
@@ -205,7 +233,7 @@ function createCandidatesFromArgs(args, flags) {
     ...generated.candidates.map((candidate) => ({
       ...candidate,
       input: candidate.word,
-      source_type: "provided",
+      source_type: "wordlist",
       candidate_type: "brandable",
       description: null,
       description_source: "none",
@@ -234,12 +262,19 @@ async function run() {
 
   if (flags.help || !command) {
     process.stdout.write(`${usage()}\n`);
-    process.exit(command ? 0 : 1);
+    process.exit(flags.help || command ? 0 : 1);
+  }
+  if (command !== "check" && command !== "check-domain" && args.length) {
+    throw new Error(`${command} does not accept positional inputs; use --words-file or check.`);
+  }
+  if (command === "check" && flags.input && args.length) {
+    throw new Error("Use either --input or positional domains, not both.");
   }
 
   if (command === "prices") {
     const summary = getTldPricing({
       tlds: flags.tlds,
+      tldLength: flags["tld-length"],
       maxPrice: flags["max-price"],
       all: Boolean(flags.all),
     });

@@ -203,7 +203,7 @@ test("checkCandidates stays score-only for single-shape inputs", async () => {
   assert.equal(summary.selected_counts.creative_suffix, 0);
 });
 
-test("checkCandidates filters weak provided shortlist entries and re-ranks the remainder", async () => {
+test("checkCandidates verifies deliberate shortlist entries without taste filtering", async () => {
   const summary = await checkCandidates({
     candidates: [
       "walk.in",
@@ -217,7 +217,7 @@ test("checkCandidates filters weak provided shortlist entries and re-ranks the r
 
   assert.deepEqual(
     summary.results.map((item) => item.domain),
-    ["steady.st", "sunrise.com", "walk.in"],
+    ["steady.st", "sunrise.com", "walk.in", "stageforgeco.com"],
   );
   assert.equal(summary.results.find((item) => item.domain === "steady.st").domain_shape, "exact");
 });
@@ -548,14 +548,12 @@ test("restricted TLDs are de-emphasized in generated rankings", () => {
   });
 
   assert.equal(unrestricted.candidates[0].domain, "sto.re");
-  assert.ok(!deemphasized.candidates.some((item) => item.domain === "sto.re"));
+  assert.equal(deemphasized.candidates[0].domain, "sto.re");
+  assert.ok(deemphasized.candidates[0].score < unrestricted.candidates[0].score);
 });
 
-test("getTldPricing can return explicit unknown TLD placeholders", () => {
-  const pricing = getTldPricing({ tlds: ["madeup"] });
-  assert.equal(pricing.items[0].tld, "madeup");
-  assert.equal(pricing.items[0].annual_price_usd, null);
-  assert.deepEqual(pricing.items[0].registration_options, []);
+test("getTldPricing rejects undelegated TLDs", () => {
+  assert.throws(() => getTldPricing({ tlds: ["madeup"] }), /Unknown or unsupported TLDs/);
 });
 
 test("getTldPricing all mode includes delegated root-zone TLDs without pricing", () => {

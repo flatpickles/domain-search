@@ -43,7 +43,9 @@ async function fetchDescription(term, options = {}) {
   const execFileFn = options.execFileFn || execFileAsync;
 
   try {
-    const response = await fetchImpl(`https://api.dictionaryapi.dev/api/v2/entries/en/${encoded}`);
+    const response = await fetchImpl(`https://api.dictionaryapi.dev/api/v2/entries/en/${encoded}`, {
+      signal: AbortSignal.timeout(Number(options.descriptionTimeout ?? 8000)),
+    });
     if (response.ok) {
       const payload = await response.json();
       const firstMeaning = payload?.[0]?.meanings?.[0]?.definitions?.[0]?.definition;
@@ -60,11 +62,14 @@ async function fetchDescription(term, options = {}) {
   try {
     const { stdout } = await execFileFn("curl", [
       "-fsSL",
+      "--max-time", String(Number(options.descriptionTimeout ?? 8000) / 1000),
       "-A",
       "domain-search/0.1.0",
       `https://en.wiktionary.org/w/api.php?action=parse&page=${encoded}&prop=text&formatversion=2&format=json`,
     ], {
       encoding: "utf8",
+      timeout: Number(options.descriptionTimeout ?? 8000) + 1000,
+      maxBuffer: 1024 * 1024,
     });
     const payload = JSON.parse(stdout);
     const description = extractDescriptionFromWiktionaryHtml(payload?.parse?.text || "");

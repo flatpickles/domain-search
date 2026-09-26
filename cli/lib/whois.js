@@ -7,7 +7,7 @@ const {
   REGISTERED_PATTERNS,
   WHOIS_HOST_OVERRIDES,
 } = require("./constants");
-const { normalizeTld } = require("./tlds");
+const { assertKnownRootTlds, normalizeTld } = require("./tlds");
 
 const execFileAsync = promisify(execFile);
 const IANA_RDAP_DNS_BOOTSTRAP_URL = "https://data.iana.org/rdap/dns.json";
@@ -31,6 +31,17 @@ function getDomainTld(domain) {
   const normalized = normalizeDomain(domain);
   const parts = normalized.split(".");
   return parts.length > 1 ? normalizeTld(parts.at(-1)) : "";
+}
+
+function validateDomain(domain) {
+  const normalized = normalizeDomain(domain);
+  const labels = normalized.split(".");
+  if (normalized.length > 253 || labels.length < 2 || labels.some((label) =>
+    label.length > 63 || !/^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/.test(label))) {
+    throw new Error(`Invalid domain: ${String(domain)}. Supply a complete domain name.`);
+  }
+  assertKnownRootTlds([labels.at(-1)], "candidate checking");
+  return normalized;
 }
 
 function wait(ms) {
@@ -90,6 +101,8 @@ function splitWhoisSections(raw) {
 
 function classifyWhoisSection(section) {
   if (!section || !String(section).trim()) return "UNKNOWN";
+  // Transport/service failures can contain "not found" or "is available" too.
+  if (/\b(?:whois\s+)?server\s+(?:was\s+)?not found\b|\b(?:service|command|host) not found\b|\bno whois server\b|\b(?:rate limit|quota exceeded|access denied|connection refused|connection timed out|temporary failure|network is unreachable)\b/i.test(section)) return "UNKNOWN";
   if (REGISTERED_PATTERNS.some((pattern) => pattern.test(section))) return "REGISTERED";
   if (AVAILABLE_PATTERNS.some((pattern) => pattern.test(section))) return "AVAILABLE";
   return "UNKNOWN";
@@ -244,36 +257,41 @@ async function checkDomainViaRdap(domain, options = {}) {
     let response = null;
 
     for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), timeoutMs);
-      try {
-        response = await runRdapRequest(
-          () =>
-            fetchFn(url, {
-              headers: {
-                accept: "application/rdap+json, application/json",
-              },
-              redirect: "follow",
-              signal: controller.signal,
-            }),
-          options,
-        );
-      } finally {
-        clearTimeout(timeout);
-      }
+      response = await runRdapRequest(async () => {
+        // Queueing is not request time: start the deadline after acquiring a slot.
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), timeoutMs);
+        try {
+          const result = await fetchFn(url, {
+            headers: {
+              accept: "application/rdap+json, application/json",
+            },
+            redirect: "follow",
+            signal: controller.signal,
+          });
+          let data = null;
+          if (result.ok || result.status === 404) {
+            try { data = await result.json(); } catch { /* Not an RDAP response. */ }
+          }
+          return { status: result.status, ok: result.ok, headers: result.headers, data };
+        } finally {
+          clearTimeout(timeout);
+        }
+      }, options);
 
       if (response.status !== 429 || attempt === maxAttempts) break;
 
       const retryDelayMs =
-        parseRetryAfterMs(response.headers?.get?.("retry-after")) ||
+        parseRetryAfterMs(response.headers?.get?.("retry-after")) ??
         Number(options.rdapRetryDelay ?? 5000) * attempt;
+      if (retryDelayMs > Number(options.rdapMaxRetryDelay ?? 30000)) break;
       await wait(retryDelayMs);
     }
 
     if (response.status === 404) {
       return {
         domain: normalized,
-        status: lookup.notFoundStatus,
+        status: response.data?.errorCode === 404 ? lookup.notFoundStatus : "UNKNOWN",
       };
     }
 
@@ -284,7 +302,7 @@ async function checkDomainViaRdap(domain, options = {}) {
       };
     }
 
-    const data = await response.json();
+    const data = response.data;
     return {
       domain: normalized,
       status: rdapResponseMatchesDomain(data, normalized) ? "REGISTERED" : "UNKNOWN",
@@ -298,7 +316,7 @@ async function checkDomainViaRdap(domain, options = {}) {
 }
 
 async function checkDomain(domain, options = {}) {
-  const normalized = normalizeDomain(domain);
+  const normalized = validateDomain(domain);
   const execFileFn = options.execFileFn || execFileAsync;
   const args = getWhoisArgs(normalized, options);
   const timeout = ["com", "net"].includes(getDomainTld(normalized)) ? 8000 : 20000;
@@ -359,4 +377,5 @@ module.exports = {
   getDomainTld,
   getWhoisArgs,
   normalizeDomain,
+  validateDomain,
 };

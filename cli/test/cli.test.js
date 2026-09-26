@@ -206,7 +206,7 @@ test("check uses curated .st registration metadata instead of Namecheap fallback
   assert.match(parsed.results[0].registration_url, /nic\.st/);
 });
 
-test("check filters weak provided domains from direct CLI args", () => {
+test("check verifies direct CLI domains without taste filtering", () => {
   const output = runCli([
     "check",
     "stageforgeco.com",
@@ -219,7 +219,7 @@ test("check filters weak provided domains from direct CLI args", () => {
 
   assert.deepEqual(
     parsed.results.map((item) => item.domain),
-    ["steady.st", "walk.in"],
+    ["steady.st", "walk.in", "stageforgeco.com"],
   );
   assert.equal(parsed.results[0].domain_shape, "exact");
   assert.equal(parsed.results[1].domain_shape, "creative_suffix");
