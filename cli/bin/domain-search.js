@@ -38,6 +38,9 @@ function usage() {
     "",
     "Input options:",
     "  --words-file <path|- >       Read newline words from a file or stdin",
+    "  --sources-file <path>       JSON words with kind, rationale, priority, and theme",
+    "  --preferences-file <path>   JSON liked/rejected names and avoided fragments",
+    "  --min-commonness <0..1>     Filter explicit source commonness ratings",
     "  --input <path|- >            Read candidate JSON from a file or stdin",
     "",
     "Check/search options:",
@@ -88,6 +91,7 @@ function parseArgs(argv) {
     "words-file", "input", "concurrency", "progress-format", "min-word-length",
     "max-word-length", "min-label-length", "max-domain-length",
     "session", "resume", "exclude-checked", "freshness-hours",
+    "sources-file", "preferences-file", "min-commonness",
   ]);
 
   for (let i = 0; i < argv.length; i += 1) {
@@ -178,6 +182,9 @@ function toGenerateOptions(flags, options = {}) {
     tlds: flags.tlds,
     tldLength: flags["tld-length"],
     wordsFile: flags["words-file"],
+    sourcesFile: flags["sources-file"],
+    preferencesFile: flags["preferences-file"],
+    minCommonness: flags["min-commonness"],
     minWordLength: flags["min-word-length"],
     maxWordLength: flags["max-word-length"],
     minLabelLength: flags["min-label-length"],
@@ -280,7 +287,7 @@ async function run() {
   }
 
   const sessionPaths = { session: flags.session, resume: flags.resume, excludeChecked: flags["exclude-checked"], freshnessHours: flags["freshness-hours"] };
-  if (flags.resume && (args.length || flags.input || flags["words-file"] || flags.mode || flags.tlds || flags.all || flags["tld-length"])) {
+  if (flags.resume && (args.length || flags.input || flags["words-file"] || flags["sources-file"] || flags["preferences-file"] || flags["min-commonness"] || flags.mode || flags.tlds || flags.all || flags["tld-length"])) {
     throw new Error("Resume uses the saved candidate pool; start a new session to change inputs or scope.");
   }
   if (command === "prices") {

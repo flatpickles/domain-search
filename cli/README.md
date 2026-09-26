@@ -101,3 +101,7 @@ Use `search --session ./naming.session.json ...` or `check --session ./shortlist
 Continue with `search --resume ./naming.session.json --limit 20 --max-checks 480`. The limit and budget apply to this run, and results contain newly checked names. Resume freezes the original pool; start a new session for new words or constraints. `--exclude-checked previous.json` also skips fresh checks from a different session or result.
 
 Default freshness: AVAILABLE 1 hour, REGISTERED 24 hours, UNKNOWN 5 minutes. `--freshness-hours N` overrides all three; `0` forces rechecking. Skipped results are never relabeled as newly verified. Keep/download the JSON file to carry a session between machines or temporary workspaces. Concurrent writers are blocked by a `.lock`; after an abrupt process kill, verify it has stopped before removing that lock.
+
+## Structured naming inputs
+
+`--sources-file` accepts typed sources with rationale, priority, theme, explicit commonness, and phonetic alternatives. `--preferences-file` preserves likes/rejections; `--min-commonness` filters supplied ratings. See [the naming input schema](../references/naming-inputs.md). Plain newline word files remain supported.

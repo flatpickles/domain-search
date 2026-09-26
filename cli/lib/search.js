@@ -20,6 +20,7 @@ const { assertKnownRootTlds } = require("./tlds");
 const { buildWordSet, loadWords, normalizeAlphaWord, normalizeWords } = require("./words");
 const { checkDomain, getDomainTld, normalizeDomain, validateDomain } = require("./whois");
 
+const { loadSourceContext, applySourceContext } = require("./sources");
 const DEFAULT_SEARCH_LIMIT = 20;
 
 function resolveNonNegativeInteger(value, name, fallback) {
@@ -330,6 +331,8 @@ function withGeneratedMetadata(candidates, mode) {
 }
 
 function generateCandidates(options = {}) {
+  const context = loadSourceContext(options);
+  if (options.sourcesFile || options.sources) options = { ...options, words: [...context.records.keys()], trustSourceWordsForHackValidation: true };
   const resolved = resolveGenerateOptions(options);
   const words = loadGenerateWords(options, resolved);
   const hackSourceWordSet = resolved.trustSourceWordsForHackValidation
@@ -346,7 +349,7 @@ function generateCandidates(options = {}) {
               generateExactCandidates(words, { ...resolved, maxDomainLength: resolved.exactMaxDomainLength, tlds: resolved.exactTlds }),
               generateHackCandidates(words, { ...resolved, tlds: resolved.creativeTlds, sourceWordSet: hackSourceWordSet }),
             );
-  const allCandidates = withGeneratedMetadata(generated, resolved.mode);
+  const allCandidates = applySourceContext(withGeneratedMetadata(generated, resolved.mode), context);
   const emittedCandidates =
     resolved.emitLimit === null
       ? allCandidates

@@ -32,6 +32,8 @@ Explicit user requests for acronyms, abbreviations, phonetic spellings, phrases,
 
 Avoid appending corporate filler such as `co` or `company` merely to force availability. Existing words such as `disco` and `zinc` are valid. Prefer natural names and a shorter strong list over contrived compounds added to reach a count.
 
+For iterative naming with source kinds, rationales, priorities, phonetic alternatives, or saved likes/rejections, read [references/naming-inputs.md](references/naming-inputs.md). Use `--sources-file` and `--preferences-file`; do not treat supplied commonness ratings as corpus statistics.
+
 ## Run a bounded live pass
 
 These examples use `./domain-search.sh` from the skill root; elsewhere use its absolute path.

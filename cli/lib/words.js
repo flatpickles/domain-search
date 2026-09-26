@@ -54,7 +54,7 @@ function loadWords(options = {}) {
 function loadKnownWordSet() {
   if (knownWordSetCache) return knownWordSetCache;
 
-  const paths = [BUNDLED_WORDS_PATH, SYSTEM_WORDS_PATH].filter((filePath) => fs.existsSync(filePath));
+  const paths = [resolveWordsPath()];
   const words = [];
 
   for (const filePath of paths) {

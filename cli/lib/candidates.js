@@ -29,7 +29,6 @@ function scoreHack(word, label, tld) {
   if (["me", "in"].includes(tld)) score += 8;
   if (tld === "it") score += 4;
   if (["de", "pe", "is", "sk", "la"].includes(tld)) score += 8;
-  if (/^(after|arch|alien|eleg|algor|alka|agel|astro|atav|apiar|acque)/.test(label)) score += 6;
   if (/(itis|osis|ine|ous|oid|ium|ase|ide)$/.test(word)) score -= 16;
   if (/(ably|edly|ally|ously|ingly)$/.test(word)) score -= 10;
   if (/^(anti|counter|inter|multi|non|over|post|pre|proto|pseudo|semi|sub|super|trans|ultra|under|un)/.test(word)) {
@@ -47,7 +46,6 @@ function scoreExact(word) {
   if (word.length <= 8) score += 14;
   if (word.length <= 7) score += 8;
   if (/(ist|ast|ore|wist|wise|ward|ling|more|less)$/.test(word)) score += 5;
-  if (/^(after|eleg|algor|alien|agel|archa|auster|ember|velvet|sable)/.test(word)) score += 5;
   if (/(itis|osis|ine|ous|oid|ium|ase|ide)$/.test(word)) score -= 16;
   if (/(ably|edly|ally|ously|ingly)$/.test(word)) score -= 10;
   if (/^(anti|counter|inter|multi|non|over|post|pre|proto|pseudo|semi|sub|super|trans|ultra|under|un)/.test(word)) {
