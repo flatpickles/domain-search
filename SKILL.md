@@ -22,7 +22,7 @@ The CLI generates and verifies candidates; the agent supplies theme, naming judg
 | A provided domain or deliberate shortlist | `check domain.app other.com --show-all` or `check --input shortlist.json --show-all` |
 | Intermediate semantic filtering is useful | `generate`, curate the output, then `check` |
 
-A TLD-length constraint preserves the complete label: four-letter bird names with two-letter TLDs means `ibis.xx`, not `ib.is`. `--tld-length` selects delegated ASCII TLDs by length; it does not certify public registration or registrant eligibility. `--all` selects the bundled root-zone snapshot, including restricted and closed TLDs.
+A TLD-length constraint preserves the complete label: four-letter bird names with two-letter TLDs means `ibis.xx`, not `ib.is`. `--tlds co.uk` supports reviewed public-suffix boundaries for exact names. `--tld-length` selects delegated ASCII TLDs by length; it does not certify public registration or registrant eligibility. `--all` selects the bundled root-zone snapshot, including restricted and closed TLDs.
 
 A price cap alone preserves mixed discovery. `--max-price` intersects the selected TLDs using dated bundled prices and excludes TLDs with unknown prices. It is not a live quote or proof that a particular domain meets the budget. Use `--mode mixed` to request mixed discovery explicitly.
 
@@ -56,6 +56,8 @@ Do not automatically broaden an ordinary request just because a result set is th
 ## Continue an iterative search
 
 Use `--session /path/to/project/naming.session.json` on search/check to checkpoint a portable candidate pool and all checks. Use the same command with `--resume ... --limit N --max-checks N` when the user asks for more. Resume returns newly checked results, skipping fresh checks (available: 1 hour; registered: 24 hours; unknown: 5 minutes). `--exclude-checked previous.json` avoids fresh repeats in a new pool; `--freshness-hours 0` explicitly rechecks finalists. Do not change candidate inputs on resume. Save sessions with the project, outside the installed skill; retain the file when leaving a temporary environment.
+
+For cloud/WHOIS diagnostics, second-level namespaces, or registrant-specific filtering, read [references/registration.md](references/registration.md). `doctor` checks local setup; `--verification rdap` needs HTTPS and Node only. Eligibility coverage is partial; use a supplied profile and never equate unknown eligibility with unrestricted registration.
 
 ## Interpret and present results
 

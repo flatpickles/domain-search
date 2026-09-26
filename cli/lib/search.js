@@ -21,6 +21,7 @@ const { buildWordSet, loadWords, normalizeAlphaWord, normalizeWords } = require(
 const { checkDomain, getDomainTld, normalizeDomain, validateDomain } = require("./whois");
 
 const { loadSourceContext, applySourceContext } = require("./sources");
+const { loadEligibility, assessEligibility } = require("./eligibility");
 const DEFAULT_SEARCH_LIMIT = 20;
 
 function resolveNonNegativeInteger(value, name, fallback) {
@@ -46,7 +47,7 @@ function resolvePositiveInteger(value, name, fallback) {
 }
 
 function assertSupportedVerificationTlds(tlds, context) {
-  assertKnownRootTlds(tlds, context);
+  assertKnownRootTlds(tlds?.map(tld => tld.split(".").at(-1)), context);
 }
 
 async function runPool(items, concurrency, worker, shouldStop) {
@@ -65,7 +66,9 @@ async function runPool(items, concurrency, worker, shouldStop) {
   for (let i = 0; i < concurrency; i += 1) {
     tasks.push(runner());
   }
-  await Promise.all(tasks);
+  const settled = await Promise.allSettled(tasks);
+  const failure = settled.find(result => result.status === "rejected");
+  if (failure) throw failure.reason;
 }
 
 function buildPriceNote(tlds) {
@@ -349,7 +352,10 @@ function generateCandidates(options = {}) {
               generateExactCandidates(words, { ...resolved, maxDomainLength: resolved.exactMaxDomainLength, tlds: resolved.exactTlds }),
               generateHackCandidates(words, { ...resolved, tlds: resolved.creativeTlds, sourceWordSet: hackSourceWordSet }),
             );
-  const allCandidates = applySourceContext(withGeneratedMetadata(generated, resolved.mode), context);
+  const eligibilityContext = loadEligibility(options);
+  const allCandidates = applySourceContext(withGeneratedMetadata(generated, resolved.mode), context)
+    .map(c => ({ ...c, eligibility: assessEligibility(c.domain, eligibilityContext) }))
+    .filter(c => !options.eligibleOnly || c.eligibility.status === "eligible");
   const emittedCandidates =
     resolved.emitLimit === null
       ? allCandidates
@@ -491,6 +497,7 @@ async function evaluateCandidates(options = {}) {
   const fallbackMode =
     options.mode === "hack" ? "hack" : options.mode === "mixed" ? "exact" : "exact";
   const candidateIndexOffset = Number(options.candidateIndexOffset ?? 0);
+  const eligibilityContext = loadEligibility(options);
   const seenDomains = new Set();
   const normalizedCandidates = (options.candidates || [])
     .map((candidate) => normalizeCandidate(candidate, fallbackMode))
@@ -634,6 +641,7 @@ async function evaluateCandidates(options = {}) {
       results.push(
         enrichWithPricing({
           ...candidate,
+          eligibility: assessEligibility(candidate.domain, eligibilityContext),
           status,
           ...check,
           ...getVerificationMetadata(status),

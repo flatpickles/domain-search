@@ -10,6 +10,7 @@ const {
   getTldPricing,
   searchDomains,
 } = require("..");
+const { doctor } = require("../lib/doctor");
 const { runWithSession } = require("../lib/sessions");
 const { normalizeWords } = require("../lib/words");
 const { normalizeDomain } = require("../lib/whois");
@@ -23,6 +24,7 @@ function usage() {
     "  generate  Generate ranked traditional .com and whole-word domain hack candidates",
     "  check     Check a shortlist, JSON input, or direct domains/names",
     "  search    Convenience wrapper for generate + check",
+    "  doctor    Check runtime/data; --network also probes HTTPS",
     "  prices    Show bundled TLD pricing and registrar metadata",
     "",
     "Shared options:",
@@ -44,6 +46,7 @@ function usage() {
     "  --input <path|- >            Read candidate JSON from a file or stdin",
     "",
     "Check/search options:",
+    "  --verification <auto|rdap|whois-first>  Auto tries RDAP first; rdap needs no WHOIS binary",
     "  --concurrency <n>            Concurrent WHOIS checks",
     "  --with-descriptions          Fetch one short description for real-word results",
     "  --show-unknown               Include UNKNOWN WHOIS results",
@@ -55,6 +58,11 @@ function usage() {
     "  --resume <file>             Continue the frozen pool, skipping fresh checks",
     "  --exclude-checked <file>    Skip fresh checks from another session/result",
     "  --freshness-hours <n>       Override status TTLs; 0 rechecks everything",
+    "",
+    "Eligibility (partial reviewed coverage):",
+    "  --profile <file>            JSON country/entity profile",
+    "  --policies <file>           Reviewed policy overrides with provenance",
+    "  --eligible-only            Generate only names passing known profile rules",
     "",
     "Word filtering:",
     "  --min-word-length <n>",
@@ -79,7 +87,7 @@ function parseArgs(argv) {
   const flags = {};
   const positional = [];
   const booleanFlags = new Set([
-    "all",
+    "all", "eligible-only", "network",
     "help",
     "show-unknown",
     "show-all",
@@ -91,7 +99,7 @@ function parseArgs(argv) {
     "words-file", "input", "concurrency", "progress-format", "min-word-length",
     "max-word-length", "min-label-length", "max-domain-length",
     "session", "resume", "exclude-checked", "freshness-hours",
-    "sources-file", "preferences-file", "min-commonness",
+    "sources-file", "preferences-file", "min-commonness", "verification", "profile", "policies",
   ]);
 
   for (let i = 0; i < argv.length; i += 1) {
@@ -132,6 +140,7 @@ function parseArgs(argv) {
     i += 1;
   }
   for (const [key, values] of Object.entries({
+    verification: ["auto", "rdap", "whois-first"],
     mode: ["mixed", "exact", "hack", "brandable"],
     format: ["json", "markdown"],
     "progress-format": ["human", "jsonl", "silent"],
@@ -178,6 +187,9 @@ function parseCandidateInput(inputPath) {
 
 function toGenerateOptions(flags, options = {}) {
   return {
+    profileFile: flags.profile,
+    policiesFile: flags.policies,
+    eligibleOnly: Boolean(flags["eligible-only"]),
     mode: flags.mode,
     tlds: flags.tlds,
     tldLength: flags["tld-length"],
@@ -197,10 +209,14 @@ function toGenerateOptions(flags, options = {}) {
 
 function toCheckOptions(flags) {
   return {
+    profileFile: flags.profile,
+    policiesFile: flags.policies,
+    eligibleOnly: Boolean(flags["eligible-only"]),
     mode: flags.mode,
     tlds: flags.tlds,
     limit: flags.limit,
     concurrency: flags.concurrency,
+    verification: flags.verification || (process.env.DOMAIN_SEARCH_WHOIS_BIN ? "whois-first" : "auto"),
     maxChecks: flags["max-checks"],
     showUnknown: Boolean(flags["show-unknown"]),
     showAll: Boolean(flags["show-all"]),
@@ -231,6 +247,9 @@ function createCandidatesFromArgs(args, flags) {
     maxWordLength: flags["max-word-length"] ?? 64,
   });
   const generated = generateCandidates({
+    profileFile: flags.profile,
+    policiesFile: flags.policies,
+    eligibleOnly: Boolean(flags["eligible-only"]),
     mode: flags.mode,
     tlds: flags.tlds,
     tldLength: flags["tld-length"],
@@ -290,6 +309,10 @@ async function run() {
   if (flags.resume && (args.length || flags.input || flags["words-file"] || flags["sources-file"] || flags["preferences-file"] || flags["min-commonness"] || flags.mode || flags.tlds || flags.all || flags["tld-length"])) {
     throw new Error("Resume uses the saved candidate pool; start a new session to change inputs or scope.");
   }
+  if (command === "doctor") {
+    writeOutput(`${JSON.stringify(await doctor({ network: Boolean(flags.network) }), null, 2)}\n`, flags);
+    return;
+  }
   if (command === "prices") {
     const summary = getTldPricing({
       tlds: flags.tlds,
@@ -340,7 +363,7 @@ async function run() {
       throw new Error("The check-domain command requires one or more domains.");
     }
     for (const input of args) {
-      const result = await checkDomain(input);
+      const result = await checkDomain(input, toCheckOptions(flags));
       process.stdout.write(`${result.status}\t${result.domain}\n`);
     }
     return;

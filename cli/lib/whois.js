@@ -12,8 +12,8 @@ const { assertKnownRootTlds, normalizeTld } = require("./tlds");
 const execFileAsync = promisify(execFile);
 const IANA_RDAP_DNS_BOOTSTRAP_URL = "https://data.iana.org/rdap/dns.json";
 const WHOIS_SECTION_MARKER = /^#\s*whois\.[^\n]+\s*$/gim;
-let rdapQueue = Promise.resolve();
-let rdapNextReadyAt = 0;
+const { schedule } = require("./scheduler");
+const { domainParts } = require("./namespaces");
 let rdapBootstrapPromise = null;
 
 function normalizeDomain(domain) {
@@ -202,21 +202,7 @@ async function getRdapLookup(domain, options = {}) {
 }
 
 async function runRdapRequest(task, options = {}) {
-  const minIntervalMs = Number(options.rdapMinInterval ?? 1500);
-  const run = async () => {
-    const delayMs = Math.max(0, rdapNextReadyAt - Date.now());
-    if (delayMs > 0) await wait(delayMs);
-
-    try {
-      return await task();
-    } finally {
-      rdapNextReadyAt = Date.now() + minIntervalMs;
-    }
-  };
-
-  const pending = rdapQueue.then(run, run);
-  rdapQueue = pending.catch(() => {});
-  return pending;
+  return schedule(options.registryHost || 'rdap', task, Number(options.rdapMinInterval ?? 1500));
 }
 
 function parseRetryAfterMs(headerValue) {
@@ -277,7 +263,7 @@ async function checkDomainViaRdap(domain, options = {}) {
         } finally {
           clearTimeout(timeout);
         }
-      }, options);
+      }, { ...options, registryHost: new URL(url).host });
 
       if (response.status !== 429 || attempt === maxAttempts) break;
 
@@ -292,13 +278,16 @@ async function checkDomainViaRdap(domain, options = {}) {
       return {
         domain: normalized,
         status: response.data?.errorCode === 404 ? lookup.notFoundStatus : "UNKNOWN",
+        verification_source: "rdap",
+        unknown_reason: response.data?.errorCode === 404 && lookup.notFoundStatus === "AVAILABLE" ? null : "untrusted_not_found",
       };
     }
 
     if (!response.ok) {
       return {
         domain: normalized,
-        status: "UNKNOWN",
+        status: "UNKNOWN", verification_source: "rdap",
+        unknown_reason: response.status === 429 ? "rate_limited" : `http_${response.status}`,
       };
     }
 
@@ -306,60 +295,51 @@ async function checkDomainViaRdap(domain, options = {}) {
     return {
       domain: normalized,
       status: rdapResponseMatchesDomain(data, normalized) ? "REGISTERED" : "UNKNOWN",
+      verification_source: "rdap", unknown_reason: rdapResponseMatchesDomain(data, normalized) ? null : "invalid_response",
     };
-  } catch {
+  } catch (error) {
     return {
       domain: normalized,
-      status: "UNKNOWN",
+      status: "UNKNOWN", verification_source: "rdap",
+      unknown_reason: error?.name === "AbortError" || error?.name === "TimeoutError" ? "timeout" : "network_error",
     };
   }
 }
 
 async function checkDomain(domain, options = {}) {
   const normalized = validateDomain(domain);
+  if (!domainParts(normalized).is_registration_domain) return {
+    domain: normalized, status: "UNKNOWN", verification_source: "public_suffix_list", unknown_reason: "not_registration_domain",
+  };
+  const strategy = options.verification || "whois-first";
+  if (!["auto", "rdap", "whois-first"].includes(strategy)) throw new Error("verification must be auto, rdap, or whois-first.");
+  let rdapResult;
+  if (strategy !== "whois-first") {
+    rdapResult = await checkDomainViaRdap(normalized, options);
+    if (rdapResult?.status !== "UNKNOWN" && rdapResult) return rdapResult;
+    if (strategy === "rdap") return rdapResult || { domain: normalized, status: "UNKNOWN", verification_source: "rdap", unknown_reason: "no_rdap_service" };
+  }
   const execFileFn = options.execFileFn || execFileAsync;
   const args = getWhoisArgs(normalized, options);
-  const timeout = ["com", "net"].includes(getDomainTld(normalized)) ? 8000 : 20000;
   const tld = getDomainTld(normalized);
-
+  const timeout = ["com", "net"].includes(tld) ? 8000 : 20000;
+  let raw = "";
+  let reason = "inconclusive_response";
   try {
-    const { stdout } = await execFileFn(
-      process.env.DOMAIN_SEARCH_WHOIS_BIN || "whois",
-      args,
-      {
-        encoding: "utf8",
-        timeout,
-        maxBuffer: 1024 * 1024,
-      },
-    );
-    let status = classifyWithTldHints(classifyWhois(stdout, { domain: normalized }), stdout, tld);
-    if (status === "UNKNOWN") {
-      const rdapResult = await checkDomainViaRdap(normalized, options);
-      if (rdapResult?.status) status = rdapResult.status;
-    }
-    return {
-      domain: normalized,
-      status,
-    };
+    const result = await schedule(`whois:${args.length > 1 ? args[1] : tld}`, () => execFileFn(
+      process.env.DOMAIN_SEARCH_WHOIS_BIN || "whois", args,
+      { encoding: "utf8", timeout, maxBuffer: 1024 * 1024 }), Number(options.whoisMinInterval ?? (options.execFileFn ? 0 : 500)));
+    raw = result.stdout;
   } catch (error) {
-    if (error && error.code === "ENOENT") {
-      throw new Error("The `whois` command is required but was not found on PATH.");
-    }
-    const stdout = error && error.stdout ? String(error.stdout) : "";
-    const stderr = error && error.stderr ? String(error.stderr) : "";
-    const raw = `${stdout}\n${stderr}`;
-    let status = classifyWithTldHints(classifyWhois(raw, { domain: normalized }), raw, tld);
-
-    if (status === "UNKNOWN") {
-      const rdapResult = await checkDomainViaRdap(normalized, options);
-      if (rdapResult?.status) status = rdapResult.status;
-    }
-
-    return {
-      domain: normalized,
-      status,
-    };
+    raw = `${error?.stdout || ""}\n${error?.stderr || ""}`;
+    reason = error?.code === "ENOENT" ? "whois_unavailable" : error?.killed ? "timeout" : "network_error";
   }
+  const transportFailure = /rate limit|quota exceeded|access denied|server not found|no whois server|connection|network is unreachable/i.test(raw);
+  const status = transportFailure ? "UNKNOWN" : classifyWithTldHints(classifyWhois(raw, { domain: normalized }), raw, tld);
+  if (status !== "UNKNOWN") return { domain: normalized, status, verification_source: "whois", unknown_reason: null };
+  if (/rate limit|quota exceeded/i.test(raw)) reason = "rate_limited";
+  if (strategy === "whois-first") rdapResult = await checkDomainViaRdap(normalized, options);
+  return rdapResult || { domain: normalized, status: "UNKNOWN", verification_source: "whois", unknown_reason: reason };
 }
 
 function classifyWithTldHints(status, raw, tld) {

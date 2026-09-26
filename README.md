@@ -27,7 +27,7 @@ Give the agent project or theme context before broad searches so the results are
 The skill and CLI need:
 
 - Node.js 22 or newer
-- `whois` available on your `PATH` for live availability checks
+- Optional `whois` on `PATH` for registries that need WHOIS fallback
 - network access for live WHOIS/RDAP checks
 
 If you do not know whether you have those installed, ask Codex or Claude to check your computer for Node.js 22 and `whois`, then install the GitHub skill above.

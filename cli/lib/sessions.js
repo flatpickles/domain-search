@@ -2,6 +2,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { randomUUID } = require('node:crypto');
 const { validateDomain } = require('./whois');
+const { loadEligibility } = require('./eligibility');
 const { getRootTldVersion } = require('./tlds');
 
 const TTL_HOURS = { AVAILABLE: 1, REGISTERED: 24, UNKNOWN: 1 / 12 };
@@ -77,6 +78,9 @@ async function runWithSession(command, options, paths = {}) {
       }
       const queryKeys = new Set(['mode','tlds','tldLength','wordsFile','sourcesFile','preferencesFile','minWordLength','maxWordLength','minLabelLength','maxDomainLength','maxPrice','all','limit','maxChecks','concurrency','showAll','showUnknown','withDescriptions','progressFormat']);
       const query = Object.fromEntries(Object.entries(options).filter(([key]) => queryKeys.has(key)));
+      const eligibility = loadEligibility(options);
+      query.profile = eligibility.profile;
+      query.policies = [...eligibility.rules.values()];
       session = { schema_version: 1, command, created_at: new Date().toISOString(), root_tld_version: getRootTldVersion(), query,
         generated: generated ? { ...generated, candidates: undefined } : null, candidates: [...byDomain.values()], checks: [] };
     }

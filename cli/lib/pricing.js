@@ -1,3 +1,4 @@
+const { isPublicNamespace, domainParts } = require("./namespaces");
 const tldMetadata = require("../data/tlds.json");
 const { resolveRegistrarMetadata } = require("./registrars");
 const { assertKnownRootTlds, getRootTlds, normalizeTlds } = require("./tlds");
@@ -58,7 +59,10 @@ function getTldPricing(options = {}) {
   if (maxPrice !== null && (!Number.isFinite(maxPrice) || maxPrice < 0)) {
     throw new Error("maxPrice must be a non-negative number.");
   }
-  if (explicitTlds) assertKnownRootTlds(explicitTlds, "pricing");
+  if (explicitTlds) {
+    assertKnownRootTlds(explicitTlds.map(t => t.split(".").at(-1)), "pricing");
+    for (const tld of explicitTlds) if (!isPublicNamespace(tld)) throw new Error(`Not a public registration namespace: ${tld}`);
+  }
   const tldLength = options.tldLength == null ? null : Number(options.tldLength);
   if (tldLength !== null && (!Number.isInteger(tldLength) || tldLength < 1 || tldLength > 63)) {
     throw new Error("tldLength must be an integer from 1 to 63.");
@@ -180,12 +184,14 @@ function resolveRegistration(entry, domain) {
 }
 
 function enrichWithPricing(candidate) {
-  const entry = getAllTldPricing().find((item) => item.tld === candidate.tld) ||
-    withComputedFields(createPlaceholderEntry(candidate.tld));
+  const namespace = domainParts(candidate.domain).namespace;
+  const entry = getAllTldPricing().find((item) => item.tld === namespace) ||
+    withComputedFields(createPlaceholderEntry(namespace));
   const registration = resolveRegistration(entry, candidate.domain);
 
   return {
     ...candidate,
+    registration_namespace: namespace,
     ...registration,
     price: entry?.annual_price_usd ?? null,
     price_updated_at: entry?.price_updated_at ?? null,

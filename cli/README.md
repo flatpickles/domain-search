@@ -105,3 +105,7 @@ Default freshness: AVAILABLE 1 hour, REGISTERED 24 hours, UNKNOWN 5 minutes. `--
 ## Structured naming inputs
 
 `--sources-file` accepts typed sources with rationale, priority, theme, explicit commonness, and phonetic alternatives. `--preferences-file` preserves likes/rejections; `--min-commonness` filters supplied ratings. See [the naming input schema](../references/naming-inputs.md). Plain newline word files remain supported.
+
+## Registration boundaries and diagnostics
+
+`doctor [--network]` reports local runtime and optional HTTPS reachability. `--verification auto|rdap|whois-first` chooses lookup ordering; auto is the CLI default. WHOIS is optional. `--tlds co.uk` supports ICANN public suffixes. `--profile`, `--policies`, and `--eligible-only` add explicit eligibility checks with partial reviewed coverage. See [registration evidence](../references/registration.md).
