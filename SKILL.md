@@ -51,6 +51,10 @@ Live checks need network access and may require the host's sandbox approval. Reu
 
 Do not automatically broaden an ordinary request just because a result set is thin. If the user explicitly asks to keep searching, continue within their requested scope and total check budget, using new candidates and existing results to avoid duplicates. Stop at the requested count, budget, exhausted useful ideas, or persistent lookup failures. If live access is denied, generate unverified ideas when useful and label them clearly.
 
+## Continue an iterative search
+
+Use `--session /path/to/project/naming.session.json` on search/check to checkpoint a portable candidate pool and all checks. Use the same command with `--resume ... --limit N --max-checks N` when the user asks for more. Resume returns newly checked results, skipping fresh checks (available: 1 hour; registered: 24 hours; unknown: 5 minutes). `--exclude-checked previous.json` avoids fresh repeats in a new pool; `--freshness-hours 0` explicitly rechecks finalists. Do not change candidate inputs on resume. Save sessions with the project, outside the installed skill; retain the file when leaving a temporary environment.
+
 ## Interpret and present results
 
 - `AVAILABLE` is a positive WHOIS/curated RDAP indication, not a completed registrar checkout. Reserved names, premiums, or eligibility requirements may still prevent ordinary registration. `REGISTERED` means taken; `UNKNOWN` is inconclusive. An absent website or DNS record proves neither availability nor registration.

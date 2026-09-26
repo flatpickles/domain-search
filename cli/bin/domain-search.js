@@ -10,6 +10,7 @@ const {
   getTldPricing,
   searchDomains,
 } = require("..");
+const { runWithSession } = require("../lib/sessions");
 const { normalizeWords } = require("../lib/words");
 const { normalizeDomain } = require("../lib/whois");
 
@@ -46,6 +47,12 @@ function usage() {
     "  --show-all                   Include registered and unknown domains in results",
     "  --progress-format <human|jsonl|silent>",
     "",
+    "Sessions (search/check):",
+    "  --session <file>            Save a new portable session; checkpoint every lookup",
+    "  --resume <file>             Continue the frozen pool, skipping fresh checks",
+    "  --exclude-checked <file>    Skip fresh checks from another session/result",
+    "  --freshness-hours <n>       Override status TTLs; 0 rechecks everything",
+    "",
     "Word filtering:",
     "  --min-word-length <n>",
     "  --max-word-length <n>",
@@ -80,6 +87,7 @@ function parseArgs(argv) {
     "mode", "tlds", "tld-length", "limit", "max-checks", "max-price", "format", "output",
     "words-file", "input", "concurrency", "progress-format", "min-word-length",
     "max-word-length", "min-label-length", "max-domain-length",
+    "session", "resume", "exclude-checked", "freshness-hours",
   ]);
 
   for (let i = 0; i < argv.length; i += 1) {
@@ -271,6 +279,10 @@ async function run() {
     throw new Error("Use either --input or positional domains, not both.");
   }
 
+  const sessionPaths = { session: flags.session, resume: flags.resume, excludeChecked: flags["exclude-checked"], freshnessHours: flags["freshness-hours"] };
+  if (flags.resume && (args.length || flags.input || flags["words-file"] || flags.mode || flags.tlds || flags.all || flags["tld-length"])) {
+    throw new Error("Resume uses the saved candidate pool; start a new session to change inputs or scope.");
+  }
   if (command === "prices") {
     const summary = getTldPricing({
       tlds: flags.tlds,
@@ -295,23 +307,23 @@ async function run() {
       candidates = parseCandidateInput(flags.input);
     } else if (args.length > 0) {
       candidates = createCandidatesFromArgs(args, flags);
-    } else {
+    } else if (!flags.resume) {
       throw new Error("The check command requires `--input` or one or more domains/words.");
     }
 
-    const summary = await checkCandidates({
+    const summary = await runWithSession("check", {
       ...toCheckOptions(flags),
       candidates,
-    });
+    }, sessionPaths);
     writeOutput(formatResults(summary, { format: flags.format || "json" }), flags);
     return;
   }
 
   if (command === "search") {
-    const summary = await searchDomains({
+    const summary = await runWithSession("search", {
       ...toGenerateOptions(flags),
       ...toCheckOptions(flags),
-    });
+    }, sessionPaths);
     writeOutput(formatResults(summary, { format: flags.format || "json" }), flags);
     return;
   }

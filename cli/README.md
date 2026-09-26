@@ -93,3 +93,11 @@ const summary = await checkCandidates({
 Library options use camelCase (`tldLength`, `maxPrice`, `maxChecks`, `showAll`). `generateCandidates` accepts `words: [...]` and `emitLimit`. Generated `real_word` metadata means wordlist-derived; it is not a guarantee that an explicitly supplied token is a dictionary word. The lower-level exact/hack/brandable generators are also exported.
 
 Run `npm test` from `cli/`, or `npm --prefix cli test` from the repository root. Automated availability tests use fixtures or injected lookups rather than live registry status.
+
+## Portable sessions
+
+Use `search --session ./naming.session.json ...` or `check --session ./shortlist.session.json ...` to save the full pool, query settings, and timestamped checks. Each completed lookup is checkpointed atomically. Session files are private local artifacts; keep them outside the installed skill/repository.
+
+Continue with `search --resume ./naming.session.json --limit 20 --max-checks 480`. The limit and budget apply to this run, and results contain newly checked names. Resume freezes the original pool; start a new session for new words or constraints. `--exclude-checked previous.json` also skips fresh checks from a different session or result.
+
+Default freshness: AVAILABLE 1 hour, REGISTERED 24 hours, UNKNOWN 5 minutes. `--freshness-hours N` overrides all three; `0` forces rechecking. Skipped results are never relabeled as newly verified. Keep/download the JSON file to carry a session between machines or temporary workspaces. Concurrent writers are blocked by a `.lock`; after an abrupt process kill, verify it has stopped before removing that lock.

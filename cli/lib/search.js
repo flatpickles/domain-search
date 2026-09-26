@@ -584,7 +584,10 @@ async function evaluateCandidates(options = {}) {
       }
       const status = typeof whoisResult === "string" ? whoisResult : whoisResult.status;
       const checkedAt = new Date().toISOString();
-      checks.push({ domain: candidate.domain, status, checked_at: checkedAt, candidateIndex: candidate.candidateIndex });
+      const check = { domain: candidate.domain, status, checked_at: checkedAt,
+        ...(typeof whoisResult === "object" ? { verification_source: whoisResult.verification_source, unknown_reason: whoisResult.unknown_reason } : {}) };
+      checks.push({ ...check, candidateIndex: candidate.candidateIndex });
+      await options.onCheck?.(check);
       checked += 1;
 
       if (status === "AVAILABLE") available += 1;
@@ -629,7 +632,7 @@ async function evaluateCandidates(options = {}) {
         enrichWithPricing({
           ...candidate,
           status,
-          checked_at: checkedAt,
+          ...check,
           ...getVerificationMetadata(status),
           description,
           description_source: descriptionSource,
@@ -773,7 +776,7 @@ function buildSearchBatches(candidates, mode, budgets) {
 }
 
 async function searchDomains(options = {}) {
-  const generated = generateCandidates(options);
+  const generated = options.generated || generateCandidates(options);
   const rankedCandidates = generated.candidates.map((candidate, index) => ({
     ...candidate,
     candidateIndex: index,
